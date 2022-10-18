@@ -83,6 +83,64 @@ const (
 	Kanji
 )
 
+// characterCountIndicatorBits returns character count indicater's bit numbers
+// reference: JIS X0510 : 2018 (ISO/IEC 18004 : 2015) Table 3
+func characterCountIndicatorBits(version int, mode ModeIndicator) int {
+	if 1 <= version && version <= 9 {
+		return version1To9CharacterCountIndicatorBits(mode)
+	} else if 10 <= version && version <= 26 {
+		return version10To26CharacterCountIndicatorBits(mode)
+	} else if 27 <= version && version <= 40 {
+		return version27To40CharacterCountIndicatorBits(mode)
+	}
+	return 0
+}
+
+func version1To9CharacterCountIndicatorBits(mode ModeIndicator) int {
+	switch mode {
+	case Numeric:
+		return 10
+	case AlphaNumeric:
+		return 9
+	case EightBits:
+		return 8
+	case Kanji:
+		return 8
+	default:
+		return 0
+	}
+}
+
+func version10To26CharacterCountIndicatorBits(mode ModeIndicator) int {
+	switch mode {
+	case Numeric:
+		return 12
+	case AlphaNumeric:
+		return 11
+	case EightBits:
+		return 16
+	case Kanji:
+		return 10
+	default:
+		return 0
+	}
+}
+
+func version27To40CharacterCountIndicatorBits(mode ModeIndicator) int {
+	switch mode {
+	case Numeric:
+		return 14
+	case AlphaNumeric:
+		return 13
+	case EightBits:
+		return 16
+	case Kanji:
+		return 12
+	default:
+		return 0
+	}
+}
+
 func FormatInfo(ecl ErrorCorrectionLevel, modules [][]bool) uint16 {
 	mask := EvaluateMask(modules)
 	formatBitSequence := (uint8(ecl) << 3) | mask

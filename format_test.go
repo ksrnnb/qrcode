@@ -40,6 +40,109 @@ func TestECLIndicator(t *testing.T) {
 	}
 }
 
+func TestCharacterCountIndicatorBits(t *testing.T) {
+	tests := []struct {
+		name    string
+		version int
+		mode    ModeIndicator
+		want    int
+	}{
+		{
+			name:    "version is less than minimum value",
+			version: 0,
+			mode:    Numeric,
+			want:    0,
+		},
+		{
+			name:    "version is greater than maximum value",
+			version: 41,
+			mode:    Numeric,
+			want:    0,
+		},
+		{
+			name:    "version is 1-9 and mode is numeric",
+			version: 1,
+			mode:    Numeric,
+			want:    10,
+		},
+		{
+			name:    "version is 1-9 and mode is alpha numeric",
+			version: 1,
+			mode:    AlphaNumeric,
+			want:    9,
+		},
+		{
+			name:    "version is 1-9 and mode is 8 bits byte",
+			version: 1,
+			mode:    EightBits,
+			want:    8,
+		},
+		{
+			name:    "version is 1-9 and mode is kanji",
+			version: 1,
+			mode:    Kanji,
+			want:    8,
+		},
+		{
+			name:    "version is 10-26 and mode is numeric",
+			version: 10,
+			mode:    Numeric,
+			want:    12,
+		},
+		{
+			name:    "version is 10-26 and mode is alpha numeric",
+			version: 10,
+			mode:    AlphaNumeric,
+			want:    11,
+		},
+		{
+			name:    "version is 10-26 and mode is 8 bits byte",
+			version: 10,
+			mode:    EightBits,
+			want:    16,
+		},
+		{
+			name:    "version is 10-26 and mode is kanji",
+			version: 10,
+			mode:    Kanji,
+			want:    10,
+		},
+		{
+			name:    "version is 27-40 and mode is numeric",
+			version: 27,
+			mode:    Numeric,
+			want:    14,
+		},
+		{
+			name:    "version is 27-40 and mode is alpha numeric",
+			version: 27,
+			mode:    AlphaNumeric,
+			want:    13,
+		},
+		{
+			name:    "version is 27-40 and mode is 8 bits byte",
+			version: 27,
+			mode:    EightBits,
+			want:    16,
+		},
+		{
+			name:    "version is 27-40 and mode is kanji",
+			version: 27,
+			mode:    Kanji,
+			want:    12,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := characterCountIndicatorBits(test.version, test.mode)
+			if result != test.want {
+				t.Errorf("expected %d, got %d\n", test.want, result)
+			}
+		})
+	}
+}
+
 func TestFormatInfo(t *testing.T) {
 	tests := []struct {
 		name string

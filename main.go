@@ -4,7 +4,8 @@ import "fmt"
 
 func main() {
 	// use only Medium to simplify
-	ecls := ECLSpecifier(Medium)
-
-	fmt.Println(ecls)
+	ecl := ECLSpecifier("M")
+	modules := [][]bool{{}}
+	formatInfo := FormatInfo(ecl, modules)
+	fmt.Println(formatInfo)
 }

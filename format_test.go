@@ -2,7 +2,7 @@ package main
 
 import "testing"
 
-func TestECLSpecifier(t *testing.T) {
+func TestECLIndicator(t *testing.T) {
 	tests := []struct {
 		name string
 		ecl  string
@@ -32,7 +32,7 @@ func TestECLSpecifier(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ecls := ECLSpecifier(test.ecl)
+			ecls := ECLIndicator(test.ecl)
 			if ecls != test.want {
 				t.Errorf("expected %d, got %d\n", test.want, ecls)
 			}

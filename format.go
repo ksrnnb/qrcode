@@ -53,8 +53,8 @@ var maskedBitSequence = []uint16{
 	0x2BED,
 }
 
-// ECLSpecifier returns error correction level specifier
-func ECLSpecifier(level string) ErrorCorrectionLevel {
+// ECLIndicator returns error correction level indicator
+func ECLIndicator(level string) ErrorCorrectionLevel {
 	switch level {
 	case "L":
 		return Low

@@ -69,6 +69,20 @@ func ECLIndicator(level string) ErrorCorrectionLevel {
 	}
 }
 
+type ModeIndicator uint8
+
+// reference: JIS X0510 : 2018 (ISO/IEC 18004 : 2015) Table 2
+const (
+	Numeric ModeIndicator = 1 << iota
+
+	AlphaNumeric
+
+	// 8 bits byte
+	EightBits
+
+	Kanji
+)
+
 func FormatInfo(ecl ErrorCorrectionLevel, modules [][]bool) uint16 {
 	mask := EvaluateMask(modules)
 	formatBitSequence := (uint8(ecl) << 3) | mask

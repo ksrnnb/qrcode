@@ -12,10 +12,14 @@ func NewBitSet(size int) *BitSet {
 	}
 }
 
-func (bs *BitSet) SetByte(pos int, v byte) {
-	for i := 0; i < 8; i++ {
-		bs.value[pos+i] = v>>(7-i) == 1
+func (bs *BitSet) SetInt(pos int, v int, size int) {
+	for i := 0; i < size; i++ {
+		bs.value[pos+i] = v>>(size-1-i) == 1
 	}
+}
+
+func (bs *BitSet) SetByte(pos int, v byte) {
+	bs.SetInt(pos, int(v), 8)
 }
 
 func (bs *BitSet) GetValue(pos int) bool {

@@ -1,5 +1,9 @@
 package bitset
 
+func GetBit[T int | uint8 | uint16](v T, pos int) bool {
+	return ((v >> pos) & 1) == 1
+}
+
 type BitSet struct {
 	size  int
 	value []bool
@@ -10,10 +14,6 @@ func NewBitSet(size int) *BitSet {
 		size:  size,
 		value: make([]bool, size),
 	}
-}
-
-func GetBit[T int | uint8 | uint16](v T, pos int) bool {
-	return ((v >> pos) & 1) == 1
 }
 
 func (bs *BitSet) SetInt(pos int, v int, size int) (nextPos int) {

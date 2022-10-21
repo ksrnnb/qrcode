@@ -10,7 +10,7 @@ func TestSetInt(t *testing.T) {
 	bs.SetInt(0, v, size)
 
 	for i := 0; i < size; i++ {
-		want := v>>(size-1-i) == 1
+		want := (v >> (size - 1 - i) & 1) == 1
 		result := bs.GetValue(i)
 		if want != result {
 			t.Errorf("expected %v, got %v at pos %d\n", want, result, i)
@@ -26,7 +26,7 @@ func TestSetByte(t *testing.T) {
 	bs.SetByte(0, v)
 
 	for i := 0; i < size; i++ {
-		want := v>>(size-1-i) == 1
+		want := (v >> (size - 1 - i) & 1) == 1
 		result := bs.GetValue(i)
 		if want != result {
 			t.Errorf("expected %v, got %v at pos %d\n", want, result, i)

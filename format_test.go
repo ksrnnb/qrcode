@@ -170,7 +170,7 @@ func TestFormatInfo(t *testing.T) {
 	}
 }
 
-func TestAddZeroPadding(t *testing.T) {
+func TestAddTerminator(t *testing.T) {
 	tests := []struct {
 		name     string
 		codeSize int
@@ -205,9 +205,50 @@ func TestAddZeroPadding(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			bs := bitset.NewBitSet(test.codeSize * 8)
 			nextPos := bs.SetInt(0, test.arg, test.length)
-			nextPos = addZeroPadding(bs, nextPos, test.codeSize*8)
+			nextPos = addTerminator(bs, nextPos, test.codeSize*8)
 			if nextPos != test.wantPos {
 				t.Errorf("nextPos is expected %d, but got %d\n", test.wantPos, nextPos)
+			}
+		})
+	}
+}
+
+func TestAddZeroPadding(t *testing.T) {
+	tests := []struct {
+		name   string
+		bsSize int
+		length int
+		arg    int
+		want   int
+	}{
+		{
+			name:   "last bit string is 8bits",
+			bsSize: 16,
+			length: 16,
+			arg:    0b1111_1111_1111_1111,
+			want:   0b1111_1111_1111_1111,
+		},
+		{
+			name:   "last bit string is not 8bits",
+			bsSize: 16,
+			length: 13,
+			arg:    0b1_1111_1111_1111,
+			want:   0b1111_1111_1111_1000,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			bs := bitset.NewBitSet(test.bsSize)
+			nextPos := bs.SetInt(0, test.arg, test.length)
+			addZeroPadding(bs, nextPos)
+
+			for i := 0; i < test.bsSize; i++ {
+				result := bs.GetValue(i)
+				want := (test.want>>(test.bsSize-1-i))&1 == 1
+				if result != want {
+					t.Errorf("expected %v, but got %v at pos %d\n", want, result, i)
+				}
 			}
 		})
 	}

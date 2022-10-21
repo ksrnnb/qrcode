@@ -33,3 +33,15 @@ func TestSetByte(t *testing.T) {
 		}
 	}
 }
+
+func TestBools(t *testing.T) {
+	bools := []bool{true, false, true}
+	bs := NewBitSet(3)
+	bs.SetBools(0, bools...)
+	for i, want := range bools {
+		result := bs.GetValue(i)
+		if result != want {
+			t.Errorf("expected %v, but got %v", want, result)
+		}
+	}
+}

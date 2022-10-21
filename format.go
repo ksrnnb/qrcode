@@ -1,5 +1,11 @@
 package main
 
+import (
+	"unicode/utf8"
+
+	"github.com/ksrnnb/qrcode/bitset"
+)
+
 type ErrorCorrectionLevel uint8
 
 const (
@@ -14,6 +20,10 @@ const (
 
 	// Level H
 	Highest ErrorCorrectionLevel = 0b10
+)
+
+const (
+	modeCharCount = 4
 )
 
 // maskedBitSequence means masking (5, 15, 7) BCH code
@@ -83,6 +93,41 @@ const (
 	Kanji
 )
 
+func FormatInfo(ecl ErrorCorrectionLevel, modules [][]bool) uint16 {
+	mask := EvaluateMask(modules)
+	formatBitSequence := (uint8(ecl) << 3) | mask
+
+	return maskedBitSequence[formatBitSequence]
+}
+
+func EncodeRawData(ecl ErrorCorrectionLevel, src string) *bitset.BitSet {
+	if ecl != Medium {
+		panic("this app supports only 1-M type, error correction level must be 'M'")
+	}
+
+	if utf8.RuneCountInString(src) >= 16 {
+		panic("this app supports only 1-M type and 8 bits byte mode, must be less than 16 characters")
+	}
+
+	mode := EightBits
+	version := 1
+
+	// 1-M: code length is 26
+	codeSize := 26 * 8
+	bs := bitset.NewBitSet(codeSize)
+
+	bitCount := characterCountIndicatorBits(version, mode)
+	charCount := utf8.RuneCountInString(src)
+
+	addModeIndicator(bs, mode)
+	addCharacterCountIndicator(bs, src, bitCount, charCount)
+	pos := addSrcData(bs, src, bitCount)
+	pos = addZeroPadding(bs, pos, codeSize)
+	addBitsPadding(bs, pos, codeSize)
+	// TODO: if needed add other padding
+	return bs
+}
+
 // characterCountIndicatorBits returns character count indicater's bit numbers
 // reference: JIS X0510 : 2018 (ISO/IEC 18004 : 2015) Table 3
 func characterCountIndicatorBits(version int, mode ModeIndicator) int {
@@ -141,9 +186,48 @@ func version27To40CharacterCountIndicatorBits(mode ModeIndicator) int {
 	}
 }
 
-func FormatInfo(ecl ErrorCorrectionLevel, modules [][]bool) uint16 {
-	mask := EvaluateMask(modules)
-	formatBitSequence := (uint8(ecl) << 3) | mask
+// addModeIndicator adds mode indicator and returns next position
+func addModeIndicator(bs *bitset.BitSet, mode ModeIndicator) int {
+	return bs.SetInt(0, int(mode), modeCharCount)
+}
 
-	return maskedBitSequence[formatBitSequence]
+// addCharacterCountIndicator adds character count indicator and returns next position
+func addCharacterCountIndicator(bs *bitset.BitSet, src string, bitCount int, charCount int) int {
+	return bs.SetInt(modeCharCount, charCount, bitCount)
+}
+
+// addSrcData adds src data and returns next position
+func addSrcData(bs *bitset.BitSet, src string, bitCount int) int {
+	// supports only 8 bit byte mode
+	var nextPos int
+	for i, c := range src {
+		nextPos = bs.SetByte(modeCharCount+bitCount+i, byte(c))
+	}
+	return nextPos
+}
+
+// addZeroPadding adds 0000 padding and returns next position
+func addZeroPadding(bs *bitset.BitSet, pos int, codeSize int) int {
+	if pos > codeSize*8 {
+		// TODO: shorten code
+		return -1
+	}
+	if pos == codeSize*8 {
+		return pos
+	}
+
+	if pos < codeSize*8-4 {
+		return bs.SetInt(pos, 0, 4)
+	}
+
+	nextPos := pos
+	for i := nextPos; i < codeSize*8; i++ {
+		nextPos = bs.SetBool(nextPos, false)
+	}
+	return nextPos
+}
+
+func addBitsPadding(bs *bitset.BitSet, pos int, codeSize int) (nextPos int) {
+	// TODO: implement
+	return -1
 }

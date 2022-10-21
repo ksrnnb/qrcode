@@ -8,4 +8,6 @@ func main() {
 	modules := [][]bool{{}}
 	formatInfo := FormatInfo(ecl, modules)
 	fmt.Println(formatInfo)
+
+	// EncodeAlphaNumericString("Hello")
 }

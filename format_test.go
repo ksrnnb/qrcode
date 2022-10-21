@@ -1,6 +1,10 @@
 package main
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/ksrnnb/qrcode/bitset"
+)
 
 func TestECLIndicator(t *testing.T) {
 	tests := []struct {
@@ -161,6 +165,49 @@ func TestFormatInfo(t *testing.T) {
 			result := FormatInfo(test.ecl, [][]bool{{}})
 			if result != test.want {
 				t.Errorf("expected %b, got %b\n", test.want, result)
+			}
+		})
+	}
+}
+
+func TestAddZeroPadding(t *testing.T) {
+	tests := []struct {
+		name     string
+		codeSize int
+		length   int
+		arg      int
+		wantPos  int
+	}{
+		{
+			name:     "equals to code size*8",
+			codeSize: 2,
+			length:   16,
+			arg:      0b1111_1111_1111_1111,
+			wantPos:  16,
+		},
+		{
+			name:     "less than code size*8 and greater than code size*8-4",
+			codeSize: 2,
+			length:   13,
+			arg:      0b1_1111_1111_1111,
+			wantPos:  16,
+		},
+		{
+			name:     "less than code size*8",
+			codeSize: 2,
+			length:   10,
+			arg:      0b11_1111_1111,
+			wantPos:  14,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			bs := bitset.NewBitSet(test.codeSize * 8)
+			nextPos := bs.SetInt(0, test.arg, test.length)
+			nextPos = addZeroPadding(bs, nextPos, test.codeSize)
+			if nextPos != test.wantPos {
+				t.Errorf("nextPos is expected %d, but got %d\n", test.wantPos, nextPos)
 			}
 		})
 	}

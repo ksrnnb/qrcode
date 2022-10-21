@@ -179,21 +179,21 @@ func TestAddZeroPadding(t *testing.T) {
 		wantPos  int
 	}{
 		{
-			name:     "equals to code size*8",
+			name:     "equals to code length",
 			codeSize: 2,
 			length:   16,
 			arg:      0b1111_1111_1111_1111,
 			wantPos:  16,
 		},
 		{
-			name:     "less than code size*8 and greater than code size*8-4",
+			name:     "less than code length and greater than code length-4",
 			codeSize: 2,
 			length:   13,
 			arg:      0b1_1111_1111_1111,
 			wantPos:  16,
 		},
 		{
-			name:     "less than code size*8",
+			name:     "less than code code length-4",
 			codeSize: 2,
 			length:   10,
 			arg:      0b11_1111_1111,
@@ -205,7 +205,7 @@ func TestAddZeroPadding(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			bs := bitset.NewBitSet(test.codeSize * 8)
 			nextPos := bs.SetInt(0, test.arg, test.length)
-			nextPos = addZeroPadding(bs, nextPos, test.codeSize)
+			nextPos = addZeroPadding(bs, nextPos, test.codeSize*8)
 			if nextPos != test.wantPos {
 				t.Errorf("nextPos is expected %d, but got %d\n", test.wantPos, nextPos)
 			}

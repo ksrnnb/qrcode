@@ -112,9 +112,10 @@ func EncodeRawData(ecl ErrorCorrectionLevel, src string) *bitset.BitSet {
 	mode := EightBits
 	version := 1
 
-	// 1-M: code length is 26
-	codeSize := 26 * 8
-	bs := bitset.NewBitSet(codeSize)
+	// 1-M: code size is 26
+	// 8 bytes mode => 26 * 8
+	codeLength := 26 * 8
+	bs := bitset.NewBitSet(codeLength)
 
 	bitCount := characterCountIndicatorBits(version, mode)
 	charCount := utf8.RuneCountInString(src)
@@ -122,8 +123,8 @@ func EncodeRawData(ecl ErrorCorrectionLevel, src string) *bitset.BitSet {
 	addModeIndicator(bs, mode)
 	addCharacterCountIndicator(bs, src, bitCount, charCount)
 	pos := addSrcData(bs, src, bitCount)
-	pos = addZeroPadding(bs, pos, codeSize)
-	addBitsPadding(bs, pos, codeSize)
+	pos = addZeroPadding(bs, pos, codeLength)
+	addBitsPadding(bs, pos, codeLength)
 	// TODO: if needed add other padding
 	return bs
 }
@@ -207,27 +208,27 @@ func addSrcData(bs *bitset.BitSet, src string, bitCount int) int {
 }
 
 // addZeroPadding adds 0000 padding and returns next position
-func addZeroPadding(bs *bitset.BitSet, pos int, codeSize int) int {
-	if pos > codeSize*8 {
+func addZeroPadding(bs *bitset.BitSet, pos int, codeLength int) int {
+	if pos > codeLength {
 		// TODO: shorten code
 		return -1
 	}
-	if pos == codeSize*8 {
+	if pos == codeLength {
 		return pos
 	}
 
-	if pos < codeSize*8-4 {
+	if pos <= codeLength-4 {
 		return bs.SetInt(pos, 0, 4)
 	}
 
 	nextPos := pos
-	for i := nextPos; i < codeSize*8; i++ {
+	for i := nextPos; i < codeLength; i++ {
 		nextPos = bs.SetBool(nextPos, false)
 	}
 	return nextPos
 }
 
-func addBitsPadding(bs *bitset.BitSet, pos int, codeSize int) (nextPos int) {
+func addBitsPadding(bs *bitset.BitSet, pos int, codeLength int) (nextPos int) {
 	// TODO: implement
 	return -1
 }

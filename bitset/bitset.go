@@ -5,40 +5,49 @@ func GetBit[T int | uint8 | uint16](v T, pos int) bool {
 }
 
 type BitSet struct {
-	size  int
-	value []bool
+	length int
+	value  []bool
+	pos    int
 }
 
-func NewBitSet(size int) *BitSet {
+func NewBitSet(length int) *BitSet {
 	return &BitSet{
-		size:  size,
-		value: make([]bool, size),
+		length: length,
+		value:  make([]bool, length),
+		pos:    0,
 	}
 }
 
-func (bs *BitSet) SetInt(pos int, v int, size int) (nextPos int) {
-	for i := 0; i < size; i++ {
-		bs.value[pos+i] = GetBit(v, size-1-i)
+func (bs *BitSet) SetInt(v int, length int) {
+	for i := 0; i < length; i++ {
+		bs.value[bs.pos+i] = GetBit(v, length-1-i)
 	}
-	return pos + size
+	bs.pos += length
 }
 
-func (bs *BitSet) SetByte(pos int, v byte) (nextPos int) {
-	return bs.SetInt(pos, int(v), 8)
+func (bs *BitSet) SetByte(v byte) {
+	bs.SetInt(int(v), 8)
 }
 
-func (bs *BitSet) SetBool(pos int, v bool) (nextPos int) {
-	bs.value[pos] = v
-	return pos + 1
+func (bs *BitSet) SetBool(v bool) {
+	bs.value[bs.pos] = v
+	bs.pos++
 }
 
-func (bs *BitSet) SetBools(pos int, v ...bool) (nextPos int) {
-	for i, b := range v {
-		nextPos = bs.SetBool(pos+i, b)
+func (bs *BitSet) SetBools(v ...bool) {
+	for _, b := range v {
+		bs.SetBool(b)
 	}
-	return nextPos
 }
 
 func (bs *BitSet) GetValue(pos int) bool {
 	return bs.value[pos]
+}
+
+func (bs *BitSet) Position() int {
+	return bs.pos
+}
+
+func (bs *BitSet) Length() int {
+	return bs.length
 }

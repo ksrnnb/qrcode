@@ -16,13 +16,13 @@ func TestGetBit(t *testing.T) {
 
 func TestSetInt(t *testing.T) {
 	v := 0b101110101111001000
-	size := 18
-	bs := NewBitSet(size)
+	codeLength := 18
+	bs := NewBitSet(codeLength)
 
-	bs.SetInt(0, v, size)
+	bs.SetInt(v, codeLength)
 
-	for i := 0; i < size; i++ {
-		want := GetBit(v, size-1-i)
+	for i := 0; i < codeLength; i++ {
+		want := GetBit(v, codeLength-1-i)
 		result := bs.GetValue(i)
 		if want != result {
 			t.Errorf("expected %v, got %v at pos %d\n", want, result, i)
@@ -32,13 +32,13 @@ func TestSetInt(t *testing.T) {
 
 func TestSetByte(t *testing.T) {
 	var v uint8 = 0b10111010
-	size := 8
-	bs := NewBitSet(size)
+	codeLength := 8
+	bs := NewBitSet(codeLength)
 
-	bs.SetByte(0, v)
+	bs.SetByte(v)
 
-	for i := 0; i < size; i++ {
-		want := GetBit(v, size-1-i)
+	for i := 0; i < codeLength; i++ {
+		want := GetBit(v, codeLength-1-i)
 		result := bs.GetValue(i)
 		if want != result {
 			t.Errorf("expected %v, got %v at pos %d\n", want, result, i)
@@ -48,8 +48,8 @@ func TestSetByte(t *testing.T) {
 
 func TestBools(t *testing.T) {
 	bools := []bool{true, false, true}
-	bs := NewBitSet(3)
-	bs.SetBools(0, bools...)
+	bs := NewBitSet(len(bools))
+	bs.SetBools(bools...)
 	for i, want := range bools {
 		result := bs.GetValue(i)
 		if result != want {

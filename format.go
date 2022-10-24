@@ -121,11 +121,11 @@ func EncodeRawData(ecl ErrorCorrectionLevel, src string) *bitset.BitSet {
 	charCount := utf8.RuneCountInString(src)
 
 	addModeIndicator(bs, mode)
-	addCharacterCountIndicator(bs, src, bitCount, charCount)
-	pos := addSrcData(bs, src, bitCount)
-	pos = addTerminator(bs, pos, codeLength)
-	pos = addZeroPadding(bs, pos)
-	addBitsPadding(bs, pos, codeLength)
+	addCharacterCountIndicator(bs, bitCount, charCount)
+	addSrcData(bs, src)
+	// TODO: bitset should have current position and Length() method
+	addTerminator(bs)
+	addPaddingBit(bs)
 
 	return bs
 }
@@ -189,67 +189,59 @@ func version27To40CharacterCountIndicatorBits(mode ModeIndicator) int {
 }
 
 // addModeIndicator adds mode indicator and returns next position
-func addModeIndicator(bs *bitset.BitSet, mode ModeIndicator) int {
-	return bs.SetInt(0, int(mode), modeCharCount)
+func addModeIndicator(bs *bitset.BitSet, mode ModeIndicator) {
+	bs.SetInt(int(mode), modeCharCount)
 }
 
 // addCharacterCountIndicator adds character count indicator and returns next position
-func addCharacterCountIndicator(bs *bitset.BitSet, src string, bitCount int, charCount int) int {
-	return bs.SetInt(modeCharCount, charCount, bitCount)
+func addCharacterCountIndicator(bs *bitset.BitSet, bitCount int, charCount int) {
+	bs.SetInt(charCount, bitCount)
 }
 
 // addSrcData adds src data and returns next position
-func addSrcData(bs *bitset.BitSet, src string, bitCount int) int {
+func addSrcData(bs *bitset.BitSet, src string) {
 	// supports only 8 bit byte mode
-	var nextPos int
-	for i, c := range src {
-		nextPos = bs.SetByte(modeCharCount+bitCount+i, byte(c))
+	for _, c := range src {
+		bs.SetByte(byte(c))
 	}
-	return nextPos
 }
 
 // addTerminator adds 0000 padding and returns next position
-func addTerminator(bs *bitset.BitSet, pos int, codeLength int) int {
-	if pos > codeLength {
-		// TODO: shorten code
-		return -1
-	}
-	if pos == codeLength {
-		return pos
+func addTerminator(bs *bitset.BitSet) {
+	if bs.Position() == bs.Length() {
+		return
 	}
 
-	if pos <= codeLength-4 {
-		return bs.SetInt(pos, 0, 4)
+	if bs.Position() <= bs.Length()-4 {
+		bs.SetInt(0, 4)
+		return
 	}
 
-	nextPos := pos
-	for i := nextPos; i < codeLength; i++ {
-		nextPos = bs.SetBool(nextPos, false)
+	nextPos := bs.Position()
+	for i := nextPos; i < bs.Length(); i++ {
+		bs.SetBool(false)
 	}
-	return nextPos
 }
 
 // addZeroPadding add 0 padding if last bit string is not 8 bits
-func addZeroPadding(bs *bitset.BitSet, pos int) (nextPos int) {
-	nextPos = pos
-
+func addZeroPadding(bs *bitset.BitSet) {
 	for i := 0; i < 8; i++ {
-		if nextPos%8 == 0 {
+		if bs.Position()%8 == 0 {
 			break
 		}
-		nextPos = bs.SetBool(nextPos, false)
+		bs.SetBool(false)
 	}
-	return nextPos
 }
 
-func addBitsPadding(bs *bitset.BitSet, pos int, codeLength int) (nextPos int) {
-	if pos > codeLength {
-		// TODO: shorten code
-		return -1
-	}
-	if pos == codeLength {
-		return pos
+// addPaddingBit add 0 padding if last bit string is not 8 bits
+func addPaddingBit(bs *bitset.BitSet) {
+	addZeroPadding(bs)
+	if bs.Position() == bs.Length() {
+		return
 	}
 
-	return -1
+	paddingPatterns := []int{0b11101100, 00010001}
+	for i := 0; bs.Position() < bs.Length(); i++ {
+		bs.SetInt(paddingPatterns[i%2], 8)
+	}
 }

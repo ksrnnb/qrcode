@@ -204,10 +204,10 @@ func TestAddTerminator(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			bs := bitset.NewBitSet(test.codeSize * 8)
-			nextPos := bs.SetInt(0, test.arg, test.length)
-			nextPos = addTerminator(bs, nextPos, test.codeSize*8)
-			if nextPos != test.wantPos {
-				t.Errorf("nextPos is expected %d, but got %d\n", test.wantPos, nextPos)
+			bs.SetInt(test.arg, test.length)
+			addTerminator(bs)
+			if bs.Position() != test.wantPos {
+				t.Errorf("nextPos is expected %d, but got %d\n", test.wantPos, bs.Position())
 			}
 		})
 	}
@@ -240,8 +240,8 @@ func TestAddZeroPadding(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			bs := bitset.NewBitSet(test.bsSize)
-			nextPos := bs.SetInt(0, test.arg, test.length)
-			addZeroPadding(bs, nextPos)
+			bs.SetInt(test.arg, test.length)
+			addZeroPadding(bs)
 
 			for i := 0; i < test.bsSize; i++ {
 				result := bs.GetValue(i)

@@ -44,6 +44,22 @@ func (bs *BitSet) GetValue(pos int) bool {
 	return bs.value[pos]
 }
 
+func (bs *BitSet) ByteAt(bytePos int) byte {
+	if bytePos < 0 || bytePos >= bs.length {
+		panic("index is invalid")
+	}
+
+	bytePos *= 8
+	var v byte
+	for i := bytePos; i < bytePos+8 && i < bs.length; i++ {
+		v <<= 1
+		if bs.GetValue(i) {
+			v |= 1
+		}
+	}
+	return v
+}
+
 func (bs *BitSet) Position() int {
 	return bs.pos
 }

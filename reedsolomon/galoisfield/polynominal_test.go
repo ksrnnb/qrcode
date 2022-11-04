@@ -2,81 +2,116 @@ package galoisfield
 
 import (
 	"testing"
-
-	"github.com/ksrnnb/qrcode/bitset"
 )
 
-func TestAdd_Polynominal(t *testing.T) {
+func TestPolynomial_Add(t *testing.T) {
 	tests := []struct {
 		name          string
-		f             []bool
-		g             []bool
-		want          []bool
+		f             Polynomial
+		g             Polynomial
+		want          Polynomial
 		wantMaxDegree int
 	}{
 		{
 			name: "normal addition",
-			f: []bool{
-				false, false, true, true, false, false, true, true,
-				false, true, true, false, false, true, true, false,
-				true, true, false, false, true, true, false, false,
+			f: Polynomial{
+				terms: []Element{
+					0b0011_0011, 0b0110_0110, 0b1100_1100,
+				},
 			},
-			g: []bool{
-				false, false, false, false, false, false, false, true,
-				false, false, false, false, false, false, true, false,
-				false, false, false, false, false, true, false, false,
-				false, false, false, false, true, false, false, false,
+			g: Polynomial{
+				terms: []Element{
+					0b0000_0001, 0b0000_0010, 0b0000_0100, 0b0000_1000,
+				},
 			},
-			want: []bool{
-				false, false, true, true, false, false, true, false,
-				false, true, true, false, false, true, false, false,
-				true, true, false, false, true, false, false, false,
-				false, false, false, false, true, false, false, false,
+			want: Polynomial{
+				terms: []Element{
+					0b0011_0010, 0b0110_0100, 0b1100_1000, 0b0000_1000,
+				},
 			},
-			wantMaxDegree: 3,
 		},
 		{
 			name: "max degree becomes zero will be normalized",
-			f: []bool{
-				false, false, true, true, false, false, true, true,
-				false, true, true, false, false, true, true, false,
-				true, true, false, false, true, true, false, false,
+			f: Polynomial{
+				terms: []Element{
+					0b0011_0011, 0b0110_0110, 0b1100_1100,
+				},
 			},
-			g: []bool{
-				false, false, false, false, false, false, false, true,
-				false, false, false, false, false, false, true, false,
-				true, true, false, false, true, true, false, false,
+			g: Polynomial{
+				terms: []Element{
+					0b0000_0001, 0b0000_0010, 0b1100_1100,
+				},
 			},
-			want: []bool{
-				false, false, true, true, false, false, true, false,
-				false, true, true, false, false, true, false, false,
+			want: Polynomial{
+				terms: []Element{
+					0b0011_0010, 0b0110_0100,
+				},
 			},
-			wantMaxDegree: 1,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			f := bitset.NewBitSet(len(test.f))
-			g := bitset.NewBitSet(len(test.g))
-			want := bitset.NewBitSet(len(test.want))
-			f.SetBools(test.f...)
-			g.SetBools(test.g...)
-			want.SetBools(test.want...)
-			fPoly := NewPolynominal(f)
-			gPoly := NewPolynominal(g)
-			wantPoly := NewPolynominal(want)
-			sum := fPoly.Add(gPoly)
+			sum := test.f.Add(test.g)
+			if sum.maxDegree() != test.want.maxDegree() {
+				t.Errorf("want degree is %d, but got %d\n", test.want.maxDegree(), sum.maxDegree())
+				return
+			}
 
-			for i, v := range wantPoly.terms {
+			for i, v := range test.want.terms {
 				if sum.terms[i] != v {
-					t.Errorf("want %+v, but got %+v\n", wantPoly, sum)
+					t.Errorf("want %+v, but got %+v\n", test.want, sum)
 					break
 				}
 			}
-			if sum.maxDegree() != test.wantMaxDegree {
-				t.Errorf("want degree is %d, but go %d\n", test.wantMaxDegree, sum.maxDegree())
+
+		})
+	}
+}
+
+func TestPolynomial_Multiply(t *testing.T) {
+	tests := []struct {
+		name          string
+		f             Polynomial
+		g             Polynomial
+		want          Polynomial
+		wantMaxDegree int
+	}{
+		{
+			name: "normal multiply",
+			f: Polynomial{
+				terms: []Element{
+					0b1000_0000, 0b1000_0111, // α^7 + α^13*x^1
+				},
+			},
+			g: Polynomial{
+				terms: []Element{
+					0b0111_0100, 0b0001_0000, 0b0001_1101, // α^10 + α^4*x^1 + α^8*x^2
+				},
+			},
+			want: Polynomial{
+				terms: []Element{
+					0b1001_1000, 0b0010_0001, 0b1011_1110, 0b0111_0101, // α^17 + α^138*x^1 + α^65*x^2 + α^21*x^3
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			p := test.f.Multiply(test.g)
+			if p.maxDegree() != test.want.maxDegree() {
+				t.Errorf("want degree is %d, but got %d\n", test.want.maxDegree(), p.maxDegree())
+				return
 			}
+
+			for i, v := range test.want.terms {
+				if p.terms[i] != v {
+					t.Errorf("want %+v, but got %+v\n", test.want, p)
+					break
+				}
+			}
+
 		})
 	}
 }

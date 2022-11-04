@@ -1,7 +1,7 @@
 package galoisfield
 
 // elements shows elements of GF(2^8)
-var elements = [256]GaloisFieldElement{
+var elements = [256]Element{
 	0b0000_0000, // 0
 	0b0000_0001, // 1
 	0b0000_0010, // α^1
@@ -260,25 +260,25 @@ var elements = [256]GaloisFieldElement{
 	0b1000_1110, // α^254
 }
 
-type GaloisFieldElement uint8
+type Element uint8
 
 // IsZero returns true if a is zero value
-func (a GaloisFieldElement) IsZero() bool {
+func (a Element) IsZero() bool {
 	return a == 0
 }
 
 // Add returns a + b
-func (a GaloisFieldElement) Add(b GaloisFieldElement) GaloisFieldElement {
+func (a Element) Add(b Element) Element {
 	return a ^ b
 }
 
 // Sub returns a - b which is equivalent to Add
-func (a GaloisFieldElement) Sub(b GaloisFieldElement) GaloisFieldElement {
+func (a Element) Sub(b Element) Element {
 	return a.Add(b)
 }
 
 // Multiply returns a * b
-func (a GaloisFieldElement) Multiply(b GaloisFieldElement) GaloisFieldElement {
+func (a Element) Multiply(b Element) Element {
 	if a.IsZero() || b.IsZero() {
 		return 0
 	}
@@ -286,7 +286,7 @@ func (a GaloisFieldElement) Multiply(b GaloisFieldElement) GaloisFieldElement {
 }
 
 // Divide returns a / b
-func (a GaloisFieldElement) Divide(b GaloisFieldElement) GaloisFieldElement {
+func (a Element) Divide(b Element) Element {
 	if b.IsZero() {
 		panic("divinding zero is invalid")
 	}
@@ -301,7 +301,7 @@ func (a GaloisFieldElement) Divide(b GaloisFieldElement) GaloisFieldElement {
 }
 
 // Index returns index n of α^n
-func (a GaloisFieldElement) Index() int {
+func (a Element) Index() int {
 	if a.IsZero() {
 		panic("invalid element value for Index()")
 	}

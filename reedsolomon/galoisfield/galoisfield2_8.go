@@ -282,7 +282,7 @@ func (a Element) Multiply(b Element) Element {
 	if a.IsZero() || b.IsZero() {
 		return 0
 	}
-	return elements[(a.Index()+b.Index())%255+1]
+	return elements[(a.Exponent()+b.Exponent())%255+1]
 }
 
 // Divide returns a / b
@@ -293,22 +293,22 @@ func (a Element) Divide(b Element) Element {
 	if a.IsZero() {
 		return 0
 	}
-	newIndex := a.Index() - b.Index()
-	if newIndex < 0 {
-		newIndex += 255
+	newExponent := a.Exponent() - b.Exponent()
+	if newExponent < 0 {
+		newExponent += 255
 	}
-	return elements[newIndex%255+1]
+	return elements[newExponent%255+1]
 }
 
-// Index returns index n of α^n
-func (a Element) Index() int {
+// Exponent returns exponent n of α^n
+func (a Element) Exponent() int {
 	if a.IsZero() {
-		panic("invalid element value for Index()")
+		panic("invalid element value for Exponent()")
 	}
 	for i, v := range elements {
 		if a == v {
 			return i - 1
 		}
 	}
-	panic("invalid element value for Index()")
+	panic("invalid element value for Exponent()")
 }

@@ -101,7 +101,7 @@ func TestDivide(t *testing.T) {
 			want: Element(0b0000_0010), // α^1
 		},
 		{
-			name: "when index of result is minus",
+			name: "when exponent of result is minus",
 			a:    Element(0b0000_1000), // α^3
 			b:    Element(0b0001_0000), // α^4
 			want: Element(0b1000_1110), // α^254

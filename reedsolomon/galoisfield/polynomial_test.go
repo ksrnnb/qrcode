@@ -142,6 +142,24 @@ func TestPolynomial_Remainder(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "remainder is zero",
+			f: Polynomial{
+				terms: []Element{
+					0b0111_0100, 0b0001_0000, 0b0001_1101, // α^10 + α^4*x^1 + α^8*x^2
+				},
+			},
+			g: Polynomial{
+				terms: []Element{
+					0b0111_0100, 0b0001_0000, 0b0001_1101, // α^10 + α^4*x^1 + α^8*x^2
+				},
+			},
+			want: Polynomial{
+				terms: []Element{
+					0b0000_0000, // 0
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -158,7 +176,6 @@ func TestPolynomial_Remainder(t *testing.T) {
 					break
 				}
 			}
-
 		})
 	}
 }

@@ -19,10 +19,17 @@ func NewBitSet(length int) *BitSet {
 }
 
 func (bs *BitSet) SetInt(v int, length int) {
+	bs.ensureCapacity(length)
 	for i := 0; i < length; i++ {
 		bs.value[bs.pos+i] = GetBit(v, length-1-i)
 	}
 	bs.pos += length
+}
+
+func (bs *BitSet) SetBytes(bytes []byte) {
+	for _, v := range bytes {
+		bs.SetByte(v)
+	}
 }
 
 func (bs *BitSet) SetByte(v byte) {
@@ -66,4 +73,23 @@ func (bs *BitSet) Position() int {
 
 func (bs *BitSet) Length() int {
 	return bs.length
+}
+
+func (bs *BitSet) Clone() *BitSet {
+	newbs := &BitSet{
+		length: bs.length,
+		value:  make([]bool, bs.length),
+		pos:    0,
+	}
+	newbs.SetBools(bs.value...)
+	return newbs
+}
+
+func (bs *BitSet) ensureCapacity(num int) {
+	if bs.pos+num < bs.length {
+		return
+	}
+	lack := bs.pos + num - bs.length + 1
+	bs.value = append(bs.value, make([]bool, lack)...)
+	bs.length += lack
 }

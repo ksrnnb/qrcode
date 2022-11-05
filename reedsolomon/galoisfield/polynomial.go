@@ -9,6 +9,10 @@ type Polynomial struct {
 	terms []Element
 }
 
+var zeroPolynomial Polynomial = Polynomial{
+	terms: []Element{0b0000_0000},
+}
+
 func NewPolynomial(bs *bitset.BitSet) Polynomial {
 	totalBytes := bs.Length() / 8
 	if bs.Length()%8 != 0 {
@@ -25,7 +29,7 @@ func NewPolynomial(bs *bitset.BitSet) Polynomial {
 
 func NewMonomial(e Element, degree int) Polynomial {
 	if e.IsZero() {
-		return Polynomial{}
+		return zeroPolynomial
 	}
 	m := Polynomial{
 		terms: make([]Element, degree+1),
@@ -93,7 +97,7 @@ func (f Polynomial) Remainder(g Polynomial) Polynomial {
 
 		remainder = remainder.Add(g.Multiply(q))
 	}
-	return remainder
+	return remainder.normalize()
 }
 
 // IsZero returns true if polynomial has no terms
@@ -104,6 +108,16 @@ func (f Polynomial) IsZero() bool {
 		}
 	}
 	return true
+}
+
+func (f Polynomial) SortAndToByte() []byte {
+	last := len(f.terms)
+	result := make([]byte, last)
+
+	for i := 0; i < last; i++ {
+		result[last-i-1] = byte(f.terms[i])
+	}
+	return result
 }
 
 // Terms returns terms of polynomial
@@ -117,12 +131,19 @@ func (f Polynomial) maxDegreeTerm() Element {
 
 // maxDegree returns max degree of polynomial
 func (f Polynomial) maxDegree() int {
+	if len(f.terms) == 0 {
+		return 0
+	}
 	return len(f.terms) - 1
 }
 
 // normalize returns new polynomial which is normalized
 // if term of max degree is zero, it will be removed
 func (f Polynomial) normalize() Polynomial {
+	if len(f.terms) == 0 {
+		return zeroPolynomial
+	}
+
 	maxDegree := f.maxDegree()
 	newMaxDegree := maxDegree
 	for i := maxDegree; i >= 0; i-- {
@@ -132,7 +153,7 @@ func (f Polynomial) normalize() Polynomial {
 		newMaxDegree--
 	}
 	if newMaxDegree < 0 {
-		return Polynomial{}
+		return zeroPolynomial
 	}
 	f.terms = f.terms[0 : newMaxDegree+1]
 	return f

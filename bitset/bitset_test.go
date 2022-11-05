@@ -30,6 +30,32 @@ func TestSetInt(t *testing.T) {
 	}
 }
 
+func TestSetBytes(t *testing.T) {
+	tests := []struct {
+		name   string
+		values []byte
+	}{
+		{
+			name:   "appending bytes",
+			values: []byte{0b0101_0101, 0b1111_1111, 0b0000_1111},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			bs := NewBitSet(0)
+			bs.SetBytes(test.values)
+			for i, want := range test.values {
+				if bs.ByteAt(i) != want {
+					t.Errorf("want %b, but got %b at index: %d", want, bs.ByteAt(i), i)
+					break
+				}
+			}
+		})
+	}
+
+}
+
 func TestSetByte(t *testing.T) {
 	var v uint8 = 0b10111010
 	codeLength := 8
@@ -84,6 +110,32 @@ func TestByteAt(t *testing.T) {
 			bs.SetBools(bools...)
 			if bs.ByteAt(test.pos) != test.want {
 				t.Errorf("want %d, but got %d", test.want, bs.ByteAt(test.pos))
+			}
+		})
+	}
+}
+
+func TestClone(t *testing.T) {
+	tests := []struct {
+		name   string
+		values []bool
+	}{
+		{
+			name:   "Clone",
+			values: []bool{false, true, false, false, true, true, true},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			bs := NewBitSet(len(test.values))
+			bs.SetBools(test.values...)
+			c := bs.Clone()
+			for i, want := range test.values {
+				if c.value[i] != want {
+					t.Errorf("want %v, but got %v at index: %d\n", want, c.value[i], i)
+					break
+				}
 			}
 		})
 	}

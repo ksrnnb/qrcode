@@ -7,7 +7,7 @@ import (
 )
 
 func EncodeRawData(ecl ErrorCorrectionLevel, src string) *bitset.BitSet {
-	if ecl != Medium {
+	if ecl != ECL_Medium {
 		panic("this app supports only 1-M type, error correction level must be 'M'")
 	}
 

@@ -4,16 +4,16 @@ type ErrorCorrectionLevel uint8
 
 const (
 	// Level L
-	Low ErrorCorrectionLevel = 0b01
+	ECL_Low ErrorCorrectionLevel = 0b01
 
 	// Level M
-	Medium ErrorCorrectionLevel = 0b00
+	ECL_Medium ErrorCorrectionLevel = 0b00
 
 	// Level Q
-	High ErrorCorrectionLevel = 0b11
+	ECL_High ErrorCorrectionLevel = 0b11
 
 	// Level H
-	Highest ErrorCorrectionLevel = 0b10
+	ECL_Highest ErrorCorrectionLevel = 0b10
 )
 
 const (
@@ -55,22 +55,6 @@ var maskedBitSequence = []uint16{
 	0x2183,
 	0x2EDA,
 	0x2BED,
-}
-
-// ECLIndicator returns error correction level indicator
-func ECLIndicator(level string) ErrorCorrectionLevel {
-	switch level {
-	case "L":
-		return Low
-	case "M":
-		return Medium
-	case "Q":
-		return High
-	case "H":
-		return Highest
-	default:
-		return Medium
-	}
 }
 
 type ModeIndicator uint8

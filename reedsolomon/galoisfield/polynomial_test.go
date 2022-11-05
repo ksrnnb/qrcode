@@ -115,3 +115,50 @@ func TestPolynomial_Multiply(t *testing.T) {
 		})
 	}
 }
+
+func TestPolynomial_Remainder(t *testing.T) {
+	tests := []struct {
+		name          string
+		f             Polynomial
+		g             Polynomial
+		want          Polynomial
+		wantMaxDegree int
+	}{
+		{
+			name: "normal remainder",
+			f: Polynomial{
+				terms: []Element{
+					0b0111_0100, 0b0001_0000, 0b0001_1101, // α^10 + α^4*x^1 + α^8*x^2
+				},
+			},
+			g: Polynomial{
+				terms: []Element{
+					0b1000_0000, 0b1000_0111, // α^7 + α^13*x^1
+				},
+			},
+			want: Polynomial{
+				terms: []Element{
+					0b1110_1011, // α^235
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			p := test.f.Remainder(test.g)
+			if p.maxDegree() != test.want.maxDegree() {
+				t.Errorf("want degree is %d, but got %d\n", test.want.maxDegree(), p.maxDegree())
+				return
+			}
+
+			for i, v := range test.want.terms {
+				if p.terms[i] != v {
+					t.Errorf("want %+v, but got %+v\n", test.want, p)
+					break
+				}
+			}
+
+		})
+	}
+}

@@ -4,7 +4,7 @@ import (
 	"github.com/ksrnnb/qrcode/bitset"
 )
 
-// Polynomial means polynominal over GF(2^8)
+// Polynomial means polynomial over GF(2^8)
 type Polynomial struct {
 	terms []Element
 }
@@ -34,7 +34,7 @@ func NewMonomial(e Element, degree int) Polynomial {
 	return m
 }
 
-// Add returns sum of polynominal over GF(2^8)
+// Add returns sum f(x) + g(x)
 func (f Polynomial) Add(g Polynomial) Polynomial {
 	sumMaxDegree := f.maxDegree()
 	if sumMaxDegree < g.maxDegree() {
@@ -57,7 +57,7 @@ func (f Polynomial) Add(g Polynomial) Polynomial {
 	return sumPoly.normalize()
 }
 
-// Add returns product of polynominal over GF(2^8)
+// Add returns product f(x) * g(x)
 func (f Polynomial) Multiply(g Polynomial) Polynomial {
 	fMaxDegree := f.maxDegree()
 	gMaxDegree := g.maxDegree()
@@ -78,12 +78,44 @@ func (f Polynomial) Multiply(g Polynomial) Polynomial {
 	return product.normalize()
 }
 
-// maxDegree returns max degree of polynominal
+// Remainder returns remainder of f(x) / g(x)
+func (f Polynomial) Remainder(g Polynomial) Polynomial {
+	if g.IsZero() {
+		panic("polynomial cannot be divided by zero")
+	}
+
+	remainder := f
+	for remainder.maxDegree() >= g.maxDegree() {
+		// calculate quotient
+		qDeg := remainder.maxDegree() - g.maxDegree()
+		qCoff := remainder.maxDegreeTerm().Divide(g.maxDegreeTerm())
+		q := NewMonomial(Element(qCoff), qDeg)
+
+		remainder = remainder.Add(g.Multiply(q))
+	}
+	return remainder
+}
+
+// IsZero returns true if polynomial has no terms
+func (f Polynomial) IsZero() bool {
+	for _, term := range f.terms {
+		if !term.IsZero() {
+			return false
+		}
+	}
+	return true
+}
+
+func (f Polynomial) maxDegreeTerm() Element {
+	return f.terms[f.maxDegree()]
+}
+
+// maxDegree returns max degree of polynomial
 func (f Polynomial) maxDegree() int {
 	return len(f.terms) - 1
 }
 
-// normalize returns new polynominal which is normalized
+// normalize returns new polynomial which is normalized
 // if term of max degree is zero, it will be removed
 func (f Polynomial) normalize() Polynomial {
 	maxDegree := f.maxDegree()

@@ -312,3 +312,11 @@ func (a Element) Exponent() int {
 	}
 	panic("invalid element value for Exponent()")
 }
+
+// ElementByExponentOfAlpha returns element from exponent n of α^n
+func ElementByExponentOfAlpha(exp int) Element {
+	if exp < 0 {
+		panic("exponent is invalid")
+	}
+	return elements[exp%255+1]
+}

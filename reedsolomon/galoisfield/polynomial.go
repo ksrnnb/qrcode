@@ -106,6 +106,11 @@ func (f Polynomial) IsZero() bool {
 	return true
 }
 
+// Terms returns terms of polynomial
+func (f Polynomial) Terms() []Element {
+	return f.terms
+}
+
 func (f Polynomial) maxDegreeTerm() Element {
 	return f.terms[f.maxDegree()]
 }

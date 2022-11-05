@@ -6,6 +6,33 @@ import (
 	"github.com/ksrnnb/qrcode/bitset"
 )
 
+func TestEncodeRawData(t *testing.T) {
+	tests := []struct {
+		name string
+		ecl  ErrorCorrectionLevel
+		data string
+		want []byte
+	}{
+		{
+			name: "1-M encode",
+			ecl:  ECL_Medium,
+			data: "Hello, World!",
+			want: []byte{64, 212, 134, 86, 198, 198, 242, 194, 5, 118, 247, 38, 198, 66, 16, 236},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := EncodeRawData(test.ecl, test.data)
+			for i, want := range test.want {
+				if result.ByteAt(i) != want {
+					t.Errorf("want %d, but got %d at index: %d\n", want, result.ByteAt(i), i)
+					break
+				}
+			}
+		})
+	}
+}
+
 func TestCharacterCountIndicatorBits(t *testing.T) {
 	tests := []struct {
 		name    string

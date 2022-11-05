@@ -13,6 +13,8 @@ var zeroPolynomial Polynomial = Polynomial{
 	terms: []Element{0b0000_0000},
 }
 
+// NewPolynomial creates Polynomial from bitset
+// when bitset has n length, polynomial is bitset[0:8]x^n-1 + bitset[8:16]x*n-2 + ... + bitset[8(n-1):8n]
 func NewPolynomial(bs *bitset.BitSet) Polynomial {
 	totalBytes := bs.Length() / 8
 	if bs.Length()%8 != 0 {
@@ -22,7 +24,7 @@ func NewPolynomial(bs *bitset.BitSet) Polynomial {
 		terms: make([]Element, totalBytes),
 	}
 	for i := 0; i < totalBytes; i++ {
-		poly.terms[i] = Element(bs.ByteAt(i))
+		poly.terms[totalBytes-i-1] = Element(bs.ByteAt(i))
 	}
 	return poly
 }
@@ -110,7 +112,8 @@ func (f Polynomial) IsZero() bool {
 	return true
 }
 
-func (f Polynomial) SortAndToByte() []byte {
+// ToByte convets polynomial to byte array and sort inversely
+func (f Polynomial) ToByte() []byte {
 	last := len(f.terms)
 	result := make([]byte, last)
 

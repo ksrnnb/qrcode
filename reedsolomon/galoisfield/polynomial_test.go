@@ -154,11 +154,25 @@ func TestPolynomial_Remainder(t *testing.T) {
 					0b0111_0100, 0b0001_0000, 0b0001_1101, // α^10 + α^4*x^1 + α^8*x^2
 				},
 			},
-			want: Polynomial{
-				terms: []Element{
-					0b0000_0000, // 0
-				},
-			},
+			want: zeroPolynomial,
+		},
+		{
+			name: "2",
+			f:    Polynomial{terms: []Element{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1}},
+			g:    Polynomial{terms: []Element{1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1}},
+			want: Polynomial{terms: []Element{0, 0, 1, 1, 1, 0, 1, 1}},
+		},
+		{
+			name: "3",
+			f:    Polynomial{terms: []Element{91, 50, 25, 184, 194, 105, 45, 244, 58, 44}},
+			g:    Polynomial{terms: []Element{254, 120, 88, 44, 11, 1}},
+			want: Polynomial{terms: []Element{}},
+		},
+		{
+			name: "4",
+			f:    Polynomial{terms: []Element{0, 0, 0, 0, 0, 0, 195, 172, 24, 64}},
+			g:    Polynomial{terms: []Element{116, 147, 63, 198, 31, 1}},
+			want: Polynomial{terms: []Element{48, 174, 34, 13, 134}},
 		},
 	}
 

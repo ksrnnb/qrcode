@@ -1,6 +1,23 @@
 package reedsolomon
 
-import "github.com/ksrnnb/qrcode/reedsolomon/galoisfield"
+import (
+	"github.com/ksrnnb/qrcode/bitset"
+	"github.com/ksrnnb/qrcode/reedsolomon/galoisfield"
+)
+
+func Encode(bs *bitset.BitSet, ecwords int) *bitset.BitSet {
+	f := galoisfield.NewPolynomial(bs)
+	f = f.Multiply(galoisfield.NewMonomial(1, ecwords))
+
+	g := GeneratorPolynomial(ecwords)
+
+	remainder := f.Remainder(g)
+
+	result := bs.Clone()
+	result.SetBytes(remainder.ToByte())
+
+	return result
+}
 
 func GeneratorPolynomial(degree int) galoisfield.Polynomial {
 	if degree < 2 {

@@ -37,6 +37,7 @@ func (bs *BitSet) SetByte(v byte) {
 }
 
 func (bs *BitSet) SetBool(v bool) {
+	bs.ensureCapacity(1)
 	bs.value[bs.pos] = v
 	bs.pos++
 }
@@ -86,10 +87,10 @@ func (bs *BitSet) Clone() *BitSet {
 }
 
 func (bs *BitSet) ensureCapacity(num int) {
-	if bs.pos+num < bs.length {
+	if bs.pos+num <= bs.length {
 		return
 	}
-	lack := bs.pos + num - bs.length + 1
+	lack := bs.pos + num - bs.length
 	bs.value = append(bs.value, make([]bool, lack)...)
 	bs.length += lack
 }

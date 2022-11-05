@@ -18,6 +18,19 @@ func NewBitSet(length int) *BitSet {
 	}
 }
 
+// Values returns byte array of bitset for debug
+func (bs *BitSet) Values() []byte {
+	length := bs.length / 8
+	if length%8 != 0 {
+		length++
+	}
+	values := make([]byte, length)
+	for i := 0; i < length; i++ {
+		values[i] = bs.ByteAt(i)
+	}
+	return values
+}
+
 func (bs *BitSet) SetInt(v int, length int) {
 	bs.ensureCapacity(length)
 	for i := 0; i < length; i++ {

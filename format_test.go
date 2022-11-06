@@ -8,20 +8,29 @@ func TestFormatInfo(t *testing.T) {
 	tests := []struct {
 		name string
 		ecl  ErrorCorrectionLevel
-		want uint16
+		mask uint8
+		want []bool
 	}{
 		{
 			name: "error correction level is M and mask pattern is 101",
 			ecl:  ECL_Medium,
-			want: 0b1000_0001_1001_110,
+			mask: 0b101,
+			want: []bool{
+				true, false, false, false,
+				false, false, false, true,
+				true, false, false, true,
+				true, true, false,
+			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := FormatInfo(test.ecl, [][]bool{{}})
-			if result != test.want {
-				t.Errorf("expected %b, got %b\n", test.want, result)
+			result := FormatInfo(test.ecl, test.mask)
+			for i, want := range test.want {
+				if result.GetValue(i) != want {
+					t.Errorf("expected %v, got %v at index: %d\n", want, result.GetValue(i), i)
+				}
 			}
 		})
 	}

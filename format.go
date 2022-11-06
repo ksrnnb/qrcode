@@ -1,5 +1,7 @@
 package main
 
+import "github.com/ksrnnb/qrcode/bitset"
+
 type ErrorCorrectionLevel uint8
 
 const (
@@ -71,9 +73,16 @@ const (
 	Kanji
 )
 
-func FormatInfo(ecl ErrorCorrectionLevel, modules [][]bool) uint16 {
-	mask := EvaluateMask(modules)
+func FormatInfo(ecl ErrorCorrectionLevel, mask uint8) *bitset.BitSet {
 	formatBitSequence := (uint8(ecl) << 3) | mask
 
-	return maskedBitSequence[formatBitSequence]
+	fi := maskedBitSequence[formatBitSequence]
+
+	// convert uint16 to bitset, length is 15
+	bs := bitset.NewBitSet(15)
+	for i := 14; i >= 0; i-- {
+		bs.SetBool((fi >> i & 1) == 1)
+	}
+
+	return bs
 }

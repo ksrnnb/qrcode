@@ -20,6 +20,8 @@ const (
 
 const (
 	modeCharCount = 4
+
+	formatInfoLength = 15
 )
 
 // maskedBitSequence means masking (5, 15, 7) BCH code
@@ -78,9 +80,9 @@ func FormatInfo(ecl ErrorCorrectionLevel, mask uint8) *bitset.BitSet {
 
 	fi := maskedBitSequence[formatBitSequence]
 
-	// convert uint16 to bitset, length is 15
-	bs := bitset.NewBitSet(15)
-	for i := 14; i >= 0; i-- {
+	// convert uint16 to bitset
+	bs := bitset.NewBitSet(formatInfoLength)
+	for i := formatInfoLength - 1; i >= 0; i-- {
 		bs.SetBool((fi >> i & 1) == 1)
 	}
 

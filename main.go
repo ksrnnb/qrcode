@@ -2,23 +2,29 @@ package main
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/ksrnnb/qrcode/reedsolomon"
 )
 
 func main() {
 	// use only Medium to simplify
-	data := EncodeRawData(ECL_Medium, "Hello, World!")
+	ecl := ECL_Medium
+	data := EncodeRawData(ecl, "Hello, World!")
+
 	// 1-M: count of error collection words is 10
 	ecwords := 10
 	rsEncoded := reedsolomon.Encode(data, ecwords)
 
-	fmt.Printf("%+v\n", rsEncoded.Values())
-
-	// TODO: add regular symbol, evaluate mask,
-	modules := [][]bool{{}}
-	formatInfo := FormatInfo(ECL_Medium, modules)
-	fmt.Println(formatInfo)
-
-	// EncodeAlphaNumericString("Hello")
+	var s *Symbol
+	penalty := math.MaxInt
+	for mask := uint8(0b000); mask <= uint8(0b111); mask++ {
+		newS := NewSymbol(ecl, mask, rsEncoded)
+		newS.build()
+		if newS.penalty() < penalty {
+			penalty = newS.penalty()
+			s = newS
+		}
+	}
+	fmt.Printf("%+v\n", s)
 }

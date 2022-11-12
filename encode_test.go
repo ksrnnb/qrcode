@@ -22,7 +22,8 @@ func TestEncodeRawData(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := encodeRawData(test.ecl, test.data)
+			info := newQRInfo(test.ecl, test.data)
+			result, err := encodeRawData(info)
 			if err != nil {
 				t.Errorf("error: %v\n", err)
 				return

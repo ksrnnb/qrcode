@@ -1,84 +1,23 @@
 package qrcode
 
 import (
-	"fmt"
 	"unicode/utf8"
 
 	"github.com/ksrnnb/qrcode/bitset"
 	"github.com/ksrnnb/qrcode/reedsolomon"
 )
 
-type qrInfo struct {
-	version            int
-	ecl                ErrorCorrectionLevel
-	mode               ModeIndicator
-	dataCap            int // code cap = countDataCodeWords + countErrorCodeWords
-	countDataCodeWords int
-	srcCap             int
-}
-
-func newQrInfo(ecl ErrorCorrectionLevel, src string) qrInfo {
-	// supports only version 1
-	switch ecl {
-	case ECL_Low:
-		return qrInfo{
-			version:            1,
-			ecl:                ecl,
-			mode:               EightBits,
-			dataCap:            26,
-			countDataCodeWords: 19,
-			srcCap:             17,
-		}
-	case ECL_Medium:
-		return qrInfo{
-			version:            1,
-			ecl:                ecl,
-			mode:               EightBits,
-			dataCap:            26,
-			countDataCodeWords: 16,
-			srcCap:             14,
-		}
-	case ECL_High:
-		return qrInfo{
-			version:            1,
-			ecl:                ecl,
-			mode:               EightBits,
-			dataCap:            26,
-			countDataCodeWords: 13,
-			srcCap:             11,
-		}
-	default: // Error Correction Level: H
-		return qrInfo{
-			version:            1,
-			ecl:                ecl,
-			mode:               EightBits,
-			dataCap:            26,
-			countDataCodeWords: 9,
-			srcCap:             7,
-		}
-	}
-}
-
-func (qi qrInfo) countErrorCordWords() int {
-	return qi.dataCap - qi.countDataCodeWords
-}
-
-func encodeRawData(ecl ErrorCorrectionLevel, src string) (*bitset.BitSet, error) {
-	info := newQrInfo(ecl, src)
-	if utf8.RuneCountInString(src) > info.srcCap {
-		return nil, fmt.Errorf("this app supports only version 1 and 8 bits byte mode, must be less than %d characters", info.srcCap+1)
-	}
-
+func encodeRawData(info qrInfo) (*bitset.BitSet, error) {
 	// 8 bytes mode => countDataCodeWords * 8
 	codeLength := info.countDataCodeWords * 8
 	bs := bitset.NewBitSet(codeLength)
 
 	bitCount := characterCountIndicatorBits(info.version, info.mode)
-	charCount := utf8.RuneCountInString(src)
+	charCount := utf8.RuneCountInString(info.src)
 
 	addModeIndicator(bs, info.mode)
 	addCharacterCountIndicator(bs, bitCount, charCount)
-	addSrcData(bs, src)
+	addSrcData(bs, info.src)
 	addTerminator(bs)
 	addPaddingBit(bs)
 

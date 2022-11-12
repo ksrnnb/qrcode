@@ -2,10 +2,12 @@ package qrcode
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"math"
+	"unicode/utf8"
 
 	"github.com/ksrnnb/qrcode/bitset"
 )
@@ -53,9 +55,73 @@ var (
 	}
 )
 
+type qrInfo struct {
+	version            int
+	ecl                ErrorCorrectionLevel
+	mode               ModeIndicator
+	dataCap            int // code cap = countDataCodeWords + countErrorCodeWords
+	countDataCodeWords int
+	srcCap             int
+	src                string
+}
+
+func newQRInfo(ecl ErrorCorrectionLevel, src string) qrInfo {
+	// supports only version 1
+	switch ecl {
+	case ECL_Low:
+		return qrInfo{
+			version:            1,
+			ecl:                ecl,
+			mode:               EightBits,
+			dataCap:            26,
+			countDataCodeWords: 19,
+			srcCap:             17,
+			src:                src,
+		}
+	case ECL_Medium:
+		return qrInfo{
+			version:            1,
+			ecl:                ecl,
+			mode:               EightBits,
+			dataCap:            26,
+			countDataCodeWords: 16,
+			srcCap:             14,
+			src:                src,
+		}
+	case ECL_High:
+		return qrInfo{
+			version:            1,
+			ecl:                ecl,
+			mode:               EightBits,
+			dataCap:            26,
+			countDataCodeWords: 13,
+			srcCap:             11,
+			src:                src,
+		}
+	default: // Error Correction Level: H
+		return qrInfo{
+			version:            1,
+			ecl:                ecl,
+			mode:               EightBits,
+			dataCap:            26,
+			countDataCodeWords: 9,
+			srcCap:             7,
+			src:                src,
+		}
+	}
+}
+
+func (qi qrInfo) countErrorCordWords() int {
+	return qi.dataCap - qi.countDataCodeWords
+}
+
 func New(ecl ErrorCorrectionLevel, content string) (*QRCode, error) {
-	// use only Medium to simplify
-	data, err := encodeRawData(ecl, content)
+	info := newQRInfo(ecl, content)
+	if utf8.RuneCountInString(content) > info.srcCap {
+		return nil, fmt.Errorf("this app supports only version 1 and 8 bits byte mode, must be less than %d characters", info.srcCap+1)
+	}
+
+	data, err := encodeRawData(info)
 	if err != nil {
 		return nil, err
 	}

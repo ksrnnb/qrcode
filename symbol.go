@@ -33,6 +33,20 @@ var (
 		{true, false, false, false, false, false, true},
 		{true, true, true, true, true, true, true},
 	}
+
+	separatorHorizontalPattern = [][]bool{
+		{false, false, false, false, false, false, false, false},
+	}
+	separatorVerticalPattern = [][]bool{
+		{false},
+		{false},
+		{false},
+		{false},
+		{false},
+		{false},
+		{false},
+		{false},
+	}
 )
 
 func NewSymbol(ecl ErrorCorrectionLevel, mask uint8, data *bitset.BitSet) *Symbol {
@@ -58,6 +72,7 @@ func NewSymbol(ecl ErrorCorrectionLevel, mask uint8, data *bitset.BitSet) *Symbo
 
 func (s *Symbol) build() {
 	s.addFinderPatterns()
+	s.addSeparatorPattern()
 	s.addTimingPatterns()
 	// NOTE: format info is added after applying mask on JIS 7.1 section
 	//       but format info is added before applying mask here because dirties should be marked before adding data
@@ -74,6 +89,23 @@ func (s *Symbol) addFinderPatterns() {
 
 	// bottom left
 	s.add2dPattern(0, s.size-finderPatternSize, finderPattern)
+}
+
+func (s *Symbol) addSeparatorPattern() {
+	// top left vertical
+	s.add2dPattern(finderPatternSize, 0, separatorVerticalPattern)
+	// top left horizontal
+	s.add2dPattern(0, finderPatternSize, separatorHorizontalPattern)
+
+	// top right vertical
+	s.add2dPattern(s.size-finderPatternSize-1, 0, separatorVerticalPattern)
+	// top right horizontal
+	s.add2dPattern(s.size-finderPatternSize-1, finderPatternSize, separatorHorizontalPattern)
+
+	// bottom right vertical
+	s.add2dPattern(finderPatternSize, s.size-finderPatternSize-1, separatorVerticalPattern)
+	// bottom right horizontal
+	s.add2dPattern(0, s.size-finderPatternSize-1, separatorHorizontalPattern)
 }
 
 func (s *Symbol) addTimingPatterns() {

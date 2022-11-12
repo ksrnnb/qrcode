@@ -1,18 +1,20 @@
-package main
+package qrcode
 
 import (
+	"errors"
 	"unicode/utf8"
 
 	"github.com/ksrnnb/qrcode/bitset"
+	"github.com/ksrnnb/qrcode/reedsolomon"
 )
 
-func EncodeRawData(ecl ErrorCorrectionLevel, src string) *bitset.BitSet {
+func encodeRawData(ecl ErrorCorrectionLevel, src string) (*bitset.BitSet, error) {
 	if ecl != ECL_Medium {
-		panic("this app supports only 1-M type, error correction level must be 'M'")
+		return nil, errors.New("this pacakge supports only 1-M type, error correction level must be 'M'")
 	}
 
 	if utf8.RuneCountInString(src) >= 16 {
-		panic("this app supports only 1-M type and 8 bits byte mode, must be less than 16 characters")
+		return nil, errors.New("this app supports only 1-M type and 8 bits byte mode, must be less than 16 characters")
 	}
 
 	mode := EightBits
@@ -32,7 +34,11 @@ func EncodeRawData(ecl ErrorCorrectionLevel, src string) *bitset.BitSet {
 	addTerminator(bs)
 	addPaddingBit(bs)
 
-	return bs
+	// 1-M: count of error collection words is 10
+	ecwords := 10
+	rsEncoded := reedsolomon.Encode(bs, ecwords)
+
+	return rsEncoded, nil
 }
 
 // characterCountIndicatorBits returns character count indicater's bit numbers

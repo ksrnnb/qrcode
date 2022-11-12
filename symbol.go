@@ -1,4 +1,4 @@
-package main
+package qrcode
 
 import (
 	"bytes"
@@ -53,7 +53,26 @@ var (
 	}
 )
 
-func NewSymbol(ecl ErrorCorrectionLevel, mask uint8, data *bitset.BitSet) *Symbol {
+func New(ecl ErrorCorrectionLevel, content string) (*Symbol, error) {
+	// use only Medium to simplify
+	data, err := encodeRawData(ecl, "Hello, World!")
+	if err != nil {
+		return nil, err
+	}
+
+	var s *Symbol
+	penalty := math.MaxInt
+	for mask := uint8(0b000); mask <= uint8(0b111); mask++ {
+		newS := newSymbol(ecl, mask, data)
+		if newS.penalty() < penalty {
+			penalty = newS.penalty()
+			s = newS
+		}
+	}
+	return s, nil
+}
+
+func newSymbol(ecl ErrorCorrectionLevel, mask uint8, data *bitset.BitSet) *Symbol {
 	// version1: module size per line is 21
 	size := 21
 
@@ -70,6 +89,8 @@ func NewSymbol(ecl ErrorCorrectionLevel, mask uint8, data *bitset.BitSet) *Symbo
 		s.modules[i] = make([]bool, size+2*quietZoneSize)
 		s.dirties[i] = make([]bool, size+2*quietZoneSize)
 	}
+
+	s.build()
 
 	return s
 }

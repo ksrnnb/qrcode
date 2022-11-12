@@ -1,4 +1,4 @@
-package main
+package qrcode
 
 import (
 	"testing"
@@ -22,7 +22,11 @@ func TestEncodeRawData(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := EncodeRawData(test.ecl, test.data)
+			result, err := encodeRawData(test.ecl, test.data)
+			if err != nil {
+				t.Errorf("error: %v\n", err)
+				return
+			}
 			for i, want := range test.want {
 				if result.ByteAt(i) != want {
 					t.Errorf("want %d, but got %d at index: %d\n", want, result.ByteAt(i), i)

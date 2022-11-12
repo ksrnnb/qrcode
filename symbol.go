@@ -14,6 +14,9 @@ type Symbol struct {
 const (
 	quietZoneSize     = 4
 	finderPatternSize = 7
+
+	up   = 1
+	down = 2
 )
 
 var (
@@ -80,7 +83,56 @@ func (s *Symbol) addTimingPatterns() {
 }
 
 func (s *Symbol) addData() {
-	// TODO: implement
+	// when dx is  0, position is right
+	// when dx is -1, position is left
+	dx := 0
+
+	// start from bottom right
+	x := s.size - 1
+	y := s.size - 1
+
+	// direction
+	direction := up
+
+	for i := 0; i < s.data.Length(); i++ {
+		mask := calculateMask(x+dx, y, s.mask)
+		// != is equivalent to XOR.
+		s.add(x+dx, y, mask != s.data.GetValue(i))
+
+		for {
+			if dx == 0 {
+				// next position is left
+				dx = -1
+			} else {
+				// next position is right
+				dx = 0
+
+				if direction == up {
+					if y > 0 {
+						y--
+					} else {
+						// if y is top, change direction
+						direction = down
+						x -= 2
+					}
+				} else {
+					if y < s.size-1 {
+						y++
+					} else {
+						// if y is bottom, change direction
+						direction = up
+						x -= 2
+					}
+				}
+			}
+
+			if !s.isDirty(x, y) {
+				// break if next position is not dirty
+				break
+			}
+			// if next position is dirty, tries to find next not dirty position
+		}
+	}
 }
 
 func (s *Symbol) addFormatInfo() {
@@ -165,4 +217,33 @@ func (s *Symbol) add(x int, y int, v bool) {
 
 func (s *Symbol) isDirty(x, y int) bool {
 	return s.dirties[y+quietZoneSize][x+quietZoneSize]
+}
+
+func calculateMask(x, y int, mask uint8) bool {
+	// i is row position, y
+	// j is column position, x
+	// substitute i, j for easy comparison with JIS
+	i := y
+	j := x
+
+	switch mask {
+	case 0:
+		return (i+j)%2 == 0
+	case 1:
+		return i%2 == 0
+	case 2:
+		return j%3 == 0
+	case 3:
+		return (i+j)%3 == 0
+	case 4:
+		return (i/2+j/3)%2 == 0
+	case 5:
+		return (i*j)%2+(i*j)%3 == 0
+	case 6:
+		return ((i*j)%2+((i*j)%3))%2 == 0
+	case 7:
+		return ((i+j)%2+((i*j)%3))%2 == 0
+	default:
+		return false
+	}
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/ksrnnb/qrcode/bitset"
 )
 
-type Symbol struct {
+type QRCode struct {
 	ecl     ErrorCorrectionLevel
 	mask    uint8
 	data    *bitset.BitSet
@@ -53,30 +53,30 @@ var (
 	}
 )
 
-func New(ecl ErrorCorrectionLevel, content string) (*Symbol, error) {
+func New(ecl ErrorCorrectionLevel, content string) (*QRCode, error) {
 	// use only Medium to simplify
 	data, err := encodeRawData(ecl, content)
 	if err != nil {
 		return nil, err
 	}
 
-	var s *Symbol
+	var q *QRCode
 	penalty := math.MaxInt
 	for mask := uint8(0b000); mask <= uint8(0b111); mask++ {
-		newS := newSymbol(ecl, mask, data)
-		if newS.penalty() < penalty {
-			penalty = newS.penalty()
-			s = newS
+		newQR := newQRCode(ecl, mask, data)
+		if newQR.penalty() < penalty {
+			penalty = newQR.penalty()
+			q = newQR
 		}
 	}
-	return s, nil
+	return q, nil
 }
 
-func newSymbol(ecl ErrorCorrectionLevel, mask uint8, data *bitset.BitSet) *Symbol {
+func newQRCode(ecl ErrorCorrectionLevel, mask uint8, data *bitset.BitSet) *QRCode {
 	// version1: module size per line is 21
 	size := 21
 
-	s := &Symbol{
+	q := &QRCode{
 		ecl:     ecl,
 		mask:    mask,
 		data:    data,
@@ -85,18 +85,18 @@ func newSymbol(ecl ErrorCorrectionLevel, mask uint8, data *bitset.BitSet) *Symbo
 		size:    size,
 	}
 
-	for i := range s.modules {
-		s.modules[i] = make([]bool, size+2*quietZoneSize)
-		s.dirties[i] = make([]bool, size+2*quietZoneSize)
+	for i := range q.modules {
+		q.modules[i] = make([]bool, size+2*quietZoneSize)
+		q.dirties[i] = make([]bool, size+2*quietZoneSize)
 	}
 
-	s.build()
+	q.build()
 
-	return s
+	return q
 }
 
-func (s *Symbol) Image(size int) image.Image {
-	realSize := s.size + 2*quietZoneSize
+func (q *QRCode) Image(size int) image.Image {
+	realSize := q.size + 2*quietZoneSize
 
 	if size < realSize {
 		size = realSize
@@ -111,7 +111,7 @@ func (s *Symbol) Image(size int) image.Image {
 	fgClr := uint8(img.Palette.Index(color.Black))
 
 	// QR code bitmap.
-	bitmap := s.modules
+	bitmap := q.modules
 
 	// Map each image pixel to the nearest QR code module.
 	modulesPerPixel := float64(realSize) / float64(size)
@@ -132,8 +132,8 @@ func (s *Symbol) Image(size int) image.Image {
 	return img
 }
 
-func (s *Symbol) PNG(size int) ([]byte, error) {
-	img := s.Image(size)
+func (q *QRCode) PNG(size int) ([]byte, error) {
+	img := q.Image(size)
 
 	var b bytes.Buffer
 	err := png.Encode(&b, img)
@@ -145,77 +145,77 @@ func (s *Symbol) PNG(size int) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func (s *Symbol) build() {
-	s.addFinderPatterns()
-	s.addSeparatorPattern()
-	s.addTimingPatterns()
+func (q *QRCode) build() {
+	q.addFinderPatterns()
+	q.addSeparatorPattern()
+	q.addTimingPatterns()
 	// NOTE: format info is added after applying mask on JIS 7.1 section
 	//       but format info is added before applying mask here because dirties should be marked before adding data
-	s.addFormatInfo()
-	s.addData()
+	q.addFormatInfo()
+	q.addData()
 }
 
-func (s *Symbol) addFinderPatterns() {
+func (q *QRCode) addFinderPatterns() {
 	// top left
-	s.add2dPattern(0, 0, finderPattern)
+	q.add2dPattern(0, 0, finderPattern)
 
 	// top right
-	s.add2dPattern(s.size-finderPatternSize, 0, finderPattern)
+	q.add2dPattern(q.size-finderPatternSize, 0, finderPattern)
 
 	// bottom left
-	s.add2dPattern(0, s.size-finderPatternSize, finderPattern)
+	q.add2dPattern(0, q.size-finderPatternSize, finderPattern)
 }
 
-func (s *Symbol) addSeparatorPattern() {
+func (q *QRCode) addSeparatorPattern() {
 	// top left vertical
-	s.add2dPattern(finderPatternSize, 0, separatorVerticalPattern)
+	q.add2dPattern(finderPatternSize, 0, separatorVerticalPattern)
 	// top left horizontal
-	s.add2dPattern(0, finderPatternSize, separatorHorizontalPattern)
+	q.add2dPattern(0, finderPatternSize, separatorHorizontalPattern)
 
 	// top right vertical
-	s.add2dPattern(s.size-finderPatternSize-1, 0, separatorVerticalPattern)
+	q.add2dPattern(q.size-finderPatternSize-1, 0, separatorVerticalPattern)
 	// top right horizontal
-	s.add2dPattern(s.size-finderPatternSize-1, finderPatternSize, separatorHorizontalPattern)
+	q.add2dPattern(q.size-finderPatternSize-1, finderPatternSize, separatorHorizontalPattern)
 
 	// bottom left vertical
-	s.add2dPattern(finderPatternSize, s.size-finderPatternSize-1, separatorVerticalPattern)
+	q.add2dPattern(finderPatternSize, q.size-finderPatternSize-1, separatorVerticalPattern)
 	// bottom left horizontal
-	s.add2dPattern(0, s.size-finderPatternSize-1, separatorHorizontalPattern)
+	q.add2dPattern(0, q.size-finderPatternSize-1, separatorHorizontalPattern)
 }
 
-func (s *Symbol) addTimingPatterns() {
+func (q *QRCode) addTimingPatterns() {
 	// timing pattern starts with true
 	v := true
 
 	// start of timing pattern: finder pattern size + separator size (1)
-	for i := finderPatternSize + 1; i < s.size-finderPatternSize-1; i++ {
+	for i := finderPatternSize + 1; i < q.size-finderPatternSize-1; i++ {
 		// horizontal direction
-		s.add(i, finderPatternSize-1, v)
+		q.add(i, finderPatternSize-1, v)
 		// vertical direction
-		s.add(finderPatternSize-1, i, v)
+		q.add(finderPatternSize-1, i, v)
 		// next module is inverse boolean
 		v = !v
 	}
 }
 
-func (s *Symbol) addData() {
+func (q *QRCode) addData() {
 	// when dx is  0, position is right
 	// when dx is -1, position is left
 	dx := 0
 
 	// start from bottom right
-	x := s.size - 1
-	y := s.size - 1
+	x := q.size - 1
+	y := q.size - 1
 
 	// direction
 	direction := up
 
-	for i := 0; i < s.data.Length(); i++ {
-		mask := calculateMask(x+dx, y, s.mask)
+	for i := 0; i < q.data.Length(); i++ {
+		mask := calculateMask(x+dx, y, q.mask)
 		// != is equivalent to XOR.
-		s.add(x+dx, y, mask != s.data.GetValue(i))
+		q.add(x+dx, y, mask != q.data.GetValue(i))
 
-		if i == s.data.Length()-1 {
+		if i == q.data.Length()-1 {
 			break
 		}
 
@@ -236,7 +236,7 @@ func (s *Symbol) addData() {
 						x -= 2
 					}
 				} else {
-					if y < s.size-1 {
+					if y < q.size-1 {
 						y++
 					} else {
 						// if y is bottom, change direction
@@ -251,7 +251,7 @@ func (s *Symbol) addData() {
 				x--
 			}
 
-			if !s.isDirty(x+dx, y) {
+			if !q.isDirty(x+dx, y) {
 				// break if next position is not dirty
 				break
 			}
@@ -260,76 +260,76 @@ func (s *Symbol) addData() {
 	}
 }
 
-func (s *Symbol) addFormatInfo() {
-	fi := FormatInfo(s.ecl, s.mask)
-	s.addVerticalFormatInfo(fi)
-	s.addHorizontalFormatInfo(fi)
+func (q *QRCode) addFormatInfo() {
+	fi := FormatInfo(q.ecl, q.mask)
+	q.addVerticalFormatInfo(fi)
+	q.addHorizontalFormatInfo(fi)
 }
 
-func (s *Symbol) addVerticalFormatInfo(fi *bitset.BitSet) {
+func (q *QRCode) addVerticalFormatInfo(fi *bitset.BitSet) {
 	last := formatInfoLength - 1
 	// Bits 0-5
 	for i := 0; i <= 5; i++ {
-		s.add(finderPatternSize+1, i, fi.GetValue(last-i))
+		q.add(finderPatternSize+1, i, fi.GetValue(last-i))
 	}
 
 	// (x, y) = (finderPatternSize+1, 6) is ignored, because it is timing pattern
 
 	// Bits 6-7
 	for i := 6; i <= 7; i++ {
-		s.add(finderPatternSize+1, i+1, fi.GetValue(last-i))
+		q.add(finderPatternSize+1, i+1, fi.GetValue(last-i))
 	}
 
-	// (finderPatternSize+1, s.size-finderPatternSize-1) is black
-	s.add(finderPatternSize+1, s.size-finderPatternSize-1, true)
+	// (finderPatternSize+1, q.size-finderPatternSize-1) is black
+	q.add(finderPatternSize+1, q.size-finderPatternSize-1, true)
 
 	// Bits 8-14
 	for i := 8; i <= 14; i++ {
-		s.add(finderPatternSize+1, s.size-finderPatternSize-8+i, fi.GetValue(last-i))
+		q.add(finderPatternSize+1, q.size-finderPatternSize-8+i, fi.GetValue(last-i))
 	}
 }
 
-func (s *Symbol) addHorizontalFormatInfo(fi *bitset.BitSet) {
+func (q *QRCode) addHorizontalFormatInfo(fi *bitset.BitSet) {
 	last := formatInfoLength - 1
 	// Bits 0-7
 	for i := 0; i <= 7; i++ {
-		s.add(s.size-i-1, finderPatternSize+1, fi.GetValue(last-i))
+		q.add(q.size-i-1, finderPatternSize+1, fi.GetValue(last-i))
 	}
 
 	// Bits 8
-	s.add(finderPatternSize, finderPatternSize+1, fi.GetValue(last-8))
+	q.add(finderPatternSize, finderPatternSize+1, fi.GetValue(last-8))
 
 	// (x, y) = (finderPatternSize-1, finderPatternSize+1) is ignored, because it is timing pattern
 
 	// Bits 9-14
 	for i := 9; i <= 14; i++ {
-		s.add(14-i, finderPatternSize+1, fi.GetValue(last-i))
+		q.add(14-i, finderPatternSize+1, fi.GetValue(last-i))
 	}
 }
 
-func (s *Symbol) penalty() int {
-	return s.penalty1() + s.penalty2() + s.penalty3() + s.penalty4()
+func (q *QRCode) penalty() int {
+	return q.penalty1() + q.penalty2() + q.penalty3() + q.penalty4()
 }
 
-func (s *Symbol) penalty1() int {
-	p := s.penalty1Horizontal()
-	if p < s.penalty1Vertical() {
-		p = s.penalty1Vertical()
+func (q *QRCode) penalty1() int {
+	p := q.penalty1Horizontal()
+	if p < q.penalty1Vertical() {
+		p = q.penalty1Vertical()
 	}
 
 	return p
 }
 
-func (s *Symbol) penalty1Horizontal() int {
+func (q *QRCode) penalty1Horizontal() int {
 	penalty := 0
 	penaltyWeight := 3
 
-	for y := 0; y < s.size; y++ {
-		lastValue := s.get(0, y)
+	for y := 0; y < q.size; y++ {
+		lastValue := q.get(0, y)
 		count := 1
 
-		for x := 1; x < s.size; x++ {
-			v := s.get(x, y)
+		for x := 1; x < q.size; x++ {
+			v := q.get(x, y)
 
 			if v != lastValue {
 				count = 1
@@ -351,16 +351,16 @@ func (s *Symbol) penalty1Horizontal() int {
 	return penalty
 }
 
-func (s *Symbol) penalty1Vertical() int {
+func (q *QRCode) penalty1Vertical() int {
 	penalty := 0
 	penaltyWeight := 3
 
-	for x := 0; x < s.size; x++ {
-		lastValue := s.get(x, 0)
+	for x := 0; x < q.size; x++ {
+		lastValue := q.get(x, 0)
 		count := 1
 
-		for y := 1; y < s.size; y++ {
-			v := s.get(x, y)
+		for y := 1; y < q.size; y++ {
+			v := q.get(x, y)
 
 			if v != lastValue {
 				count = 1
@@ -382,16 +382,16 @@ func (s *Symbol) penalty1Vertical() int {
 	return penalty
 }
 
-func (s *Symbol) penalty2() int {
+func (q *QRCode) penalty2() int {
 	penalty := 0
 	penaltyWeight2 := 3
 
-	for y := 1; y < s.size; y++ {
-		for x := 1; x < s.size; x++ {
-			topLeft := s.get(x-1, y-1)
-			above := s.get(x, y-1)
-			left := s.get(x-1, y)
-			current := s.get(x, y)
+	for y := 1; y < q.size; y++ {
+		for x := 1; x < q.size; x++ {
+			topLeft := q.get(x-1, y-1)
+			above := q.get(x, y-1)
+			left := q.get(x-1, y)
+			current := q.get(x, y)
 
 			if current == left && current == above && current == topLeft {
 				penalty++
@@ -401,15 +401,15 @@ func (s *Symbol) penalty2() int {
 	return penalty * penaltyWeight2
 }
 
-func (s *Symbol) penalty3() int {
+func (q *QRCode) penalty3() int {
 	penaltyWeight3 := 40
 
-	for y := 0; y < s.size; y++ {
+	for y := 0; y < q.size; y++ {
 		var bitBuffer uint16 = 0x00
 
-		for x := 0; x < s.size; x++ {
+		for x := 0; x < q.size; x++ {
 			bitBuffer <<= 1
-			if v := s.get(x, y); v {
+			if v := q.get(x, y); v {
 				bitBuffer |= 1
 			}
 
@@ -419,19 +419,19 @@ func (s *Symbol) penalty3() int {
 			case 0x05d, 0x5d0:
 				return penaltyWeight3
 			default:
-				if x == s.size-1 && (bitBuffer&0x7f) == 0x5d {
+				if x == q.size-1 && (bitBuffer&0x7f) == 0x5d {
 					return penaltyWeight3
 				}
 			}
 		}
 	}
 
-	for x := 0; x < s.size; x++ {
+	for x := 0; x < q.size; x++ {
 		var bitBuffer uint16 = 0x00
 
-		for y := 0; y < s.size; y++ {
+		for y := 0; y < q.size; y++ {
 			bitBuffer <<= 1
-			if v := s.get(x, y); v {
+			if v := q.get(x, y); v {
 				bitBuffer |= 1
 			}
 
@@ -441,7 +441,7 @@ func (s *Symbol) penalty3() int {
 			case 0x05d, 0x5d0:
 				return penaltyWeight3
 			default:
-				if y == s.size-1 && (bitBuffer&0x7f) == 0x5d {
+				if y == q.size-1 && (bitBuffer&0x7f) == 0x5d {
 					return penaltyWeight3
 				}
 			}
@@ -451,14 +451,14 @@ func (s *Symbol) penalty3() int {
 	return 0
 }
 
-func (s *Symbol) penalty4() int {
+func (q *QRCode) penalty4() int {
 	penaltyWeight4 := 10
-	numModules := s.size * s.size
+	numModules := q.size * q.size
 	numDarkModules := 0
 
-	for x := 0; x < s.size; x++ {
-		for y := 0; y < s.size; y++ {
-			if v := s.get(x, y); v {
+	for x := 0; x < q.size; x++ {
+		for y := 0; y < q.size; y++ {
+			if v := q.get(x, y); v {
 				numDarkModules++
 			}
 		}
@@ -473,25 +473,25 @@ func (s *Symbol) penalty4() int {
 	return penaltyWeight4 * (int(math.Ceil(diffPercent / 5)))
 }
 
-func (s *Symbol) add2dPattern(x int, y int, pattern [][]bool) {
+func (q *QRCode) add2dPattern(x int, y int, pattern [][]bool) {
 	for dy, row := range pattern {
 		for dx, v := range row {
-			s.add(x+dx, y+dy, v)
+			q.add(x+dx, y+dy, v)
 		}
 	}
 }
 
-func (s *Symbol) add(x int, y int, v bool) {
-	s.modules[y+quietZoneSize][x+quietZoneSize] = v
-	s.dirties[y+quietZoneSize][x+quietZoneSize] = true
+func (q *QRCode) add(x int, y int, v bool) {
+	q.modules[y+quietZoneSize][x+quietZoneSize] = v
+	q.dirties[y+quietZoneSize][x+quietZoneSize] = true
 }
 
-func (s *Symbol) get(x int, y int) bool {
-	return s.modules[y+quietZoneSize][x+quietZoneSize]
+func (q *QRCode) get(x int, y int) bool {
+	return q.modules[y+quietZoneSize][x+quietZoneSize]
 }
 
-func (s *Symbol) isDirty(x, y int) bool {
-	return s.dirties[y+quietZoneSize][x+quietZoneSize]
+func (q *QRCode) isDirty(x, y int) bool {
+	return q.dirties[y+quietZoneSize][x+quietZoneSize]
 }
 
 func calculateMask(x, y int, mask uint8) bool {

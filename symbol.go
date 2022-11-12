@@ -1,6 +1,10 @@
 package main
 
-import "github.com/ksrnnb/qrcode/bitset"
+import (
+	"math"
+
+	"github.com/ksrnnb/qrcode/bitset"
+)
 
 type Symbol struct {
 	ecl     ErrorCorrectionLevel
@@ -42,6 +46,11 @@ func NewSymbol(ecl ErrorCorrectionLevel, mask uint8, data *bitset.BitSet) *Symbo
 		modules: make([][]bool, size+2*quietZoneSize),
 		dirties: make([][]bool, size+2*quietZoneSize),
 		size:    size,
+	}
+
+	for i := range s.modules {
+		s.modules[i] = make([]bool, size+2*quietZoneSize)
+		s.dirties[i] = make([]bool, size+2*quietZoneSize)
 	}
 
 	return s
@@ -99,6 +108,10 @@ func (s *Symbol) addData() {
 		// != is equivalent to XOR.
 		s.add(x+dx, y, mask != s.data.GetValue(i))
 
+		if i == s.data.Length()-1 {
+			break
+		}
+
 		for {
 			if dx == 0 {
 				// next position is left
@@ -126,7 +139,7 @@ func (s *Symbol) addData() {
 				}
 			}
 
-			if !s.isDirty(x, y) {
+			if !s.isDirty(x+dx, y) {
 				// break if next position is not dirty
 				break
 			}
@@ -187,19 +200,165 @@ func (s *Symbol) penalty() int {
 }
 
 func (s *Symbol) penalty1() int {
-	return 0
+	p := s.penalty1Horizontal()
+	if p < s.penalty1Vertical() {
+		p = s.penalty1Vertical()
+	}
+
+	return p
+}
+
+func (s *Symbol) penalty1Horizontal() int {
+	penalty := 0
+	penaltyWeight := 3
+
+	for y := 0; y < s.size; y++ {
+		lastValue := s.get(0, y)
+		count := 1
+
+		for x := 1; x < s.size; x++ {
+			v := s.get(x, y)
+
+			if v != lastValue {
+				count = 1
+				lastValue = v
+			} else {
+				count++
+				if count == 5 {
+					if penalty < penaltyWeight {
+						penalty = penaltyWeight
+					}
+				} else if count > 6 {
+					if penalty < penaltyWeight+count-5 {
+						penalty = penaltyWeight + count - 5
+					}
+				}
+			}
+		}
+	}
+	return penalty
+}
+
+func (s *Symbol) penalty1Vertical() int {
+	penalty := 0
+	penaltyWeight := 3
+
+	for x := 0; x < s.size; x++ {
+		lastValue := s.get(x, 0)
+		count := 1
+
+		for y := 1; y < s.size; y++ {
+			v := s.get(x, y)
+
+			if v != lastValue {
+				count = 1
+				lastValue = v
+			} else {
+				count++
+				if count == 5 {
+					if penalty < penaltyWeight {
+						penalty = penaltyWeight
+					}
+				} else if count > 6 {
+					if penalty < penaltyWeight+count-5 {
+						penalty = penaltyWeight + count - 5
+					}
+				}
+			}
+		}
+	}
+	return penalty
 }
 
 func (s *Symbol) penalty2() int {
-	return 0
+	penalty := 0
+	penaltyWeight2 := 3
+
+	for y := 1; y < s.size; y++ {
+		for x := 1; x < s.size; x++ {
+			topLeft := s.get(x-1, y-1)
+			above := s.get(x, y-1)
+			left := s.get(x-1, y)
+			current := s.get(x, y)
+
+			if current == left && current == above && current == topLeft {
+				penalty++
+			}
+		}
+	}
+	return penalty * penaltyWeight2
 }
 
 func (s *Symbol) penalty3() int {
+	penaltyWeight3 := 40
+
+	for y := 0; y < s.size; y++ {
+		var bitBuffer uint16 = 0x00
+
+		for x := 0; x < s.size; x++ {
+			bitBuffer <<= 1
+			if v := s.get(x, y); v {
+				bitBuffer |= 1
+			}
+
+			switch bitBuffer & 0x7ff {
+			// 0b000 0101 1101 or 0b101 1101 0000
+			// 0x05d           or 0x5d0
+			case 0x05d, 0x5d0:
+				return penaltyWeight3
+			default:
+				if x == s.size-1 && (bitBuffer&0x7f) == 0x5d {
+					return penaltyWeight3
+				}
+			}
+		}
+	}
+
+	for x := 0; x < s.size; x++ {
+		var bitBuffer uint16 = 0x00
+
+		for y := 0; y < s.size; y++ {
+			bitBuffer <<= 1
+			if v := s.get(x, y); v {
+				bitBuffer |= 1
+			}
+
+			switch bitBuffer & 0x7ff {
+			// 0b000 0101 1101 or 0b101 1101 0000
+			// 0x05d           or 0x5d0
+			case 0x05d, 0x5d0:
+				return penaltyWeight3
+			default:
+				if y == s.size-1 && (bitBuffer&0x7f) == 0x5d {
+					return penaltyWeight3
+				}
+			}
+		}
+	}
+
 	return 0
 }
 
 func (s *Symbol) penalty4() int {
-	return 0
+	penaltyWeight4 := 10
+	numModules := s.size * s.size
+	numDarkModules := 0
+
+	for x := 0; x < s.size; x++ {
+		for y := 0; y < s.size; y++ {
+			if v := s.get(x, y); v {
+				numDarkModules++
+			}
+		}
+	}
+
+	ratio := float64(numDarkModules) / float64(numModules)
+	diffPercent := 50 - ratio*100
+	if diffPercent < 0 {
+		diffPercent *= -1
+	}
+
+	return penaltyWeight4 * (int(math.Ceil(diffPercent / 5)))
 }
 
 func (s *Symbol) add2dPattern(x int, y int, pattern [][]bool) {
@@ -213,6 +372,10 @@ func (s *Symbol) add2dPattern(x int, y int, pattern [][]bool) {
 func (s *Symbol) add(x int, y int, v bool) {
 	s.modules[y+quietZoneSize][x+quietZoneSize] = v
 	s.dirties[y+quietZoneSize][x+quietZoneSize] = true
+}
+
+func (s *Symbol) get(x int, y int) bool {
+	return s.modules[y+quietZoneSize][x+quietZoneSize]
 }
 
 func (s *Symbol) isDirty(x, y int) bool {

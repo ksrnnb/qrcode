@@ -213,7 +213,7 @@ func (s *Symbol) addHorizontalFormatInfo(fi *bitset.BitSet) {
 	last := formatInfoLength - 1
 	// Bits 0-7
 	for i := 0; i <= 7; i++ {
-		s.add(s.size-i, i, fi.GetValue(last-i))
+		s.add(s.size-i-1, finderPatternSize+1, fi.GetValue(last-i))
 	}
 
 	// Bits 8

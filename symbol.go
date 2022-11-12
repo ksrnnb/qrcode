@@ -55,7 +55,7 @@ var (
 
 func New(ecl ErrorCorrectionLevel, content string) (*Symbol, error) {
 	// use only Medium to simplify
-	data, err := encodeRawData(ecl, "Hello, World!")
+	data, err := encodeRawData(ecl, content)
 	if err != nil {
 		return nil, err
 	}

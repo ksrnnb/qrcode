@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -157,9 +156,9 @@ func (s *Symbol) addSeparatorPattern() {
 	// top right horizontal
 	s.add2dPattern(s.size-finderPatternSize-1, finderPatternSize, separatorHorizontalPattern)
 
-	// bottom right vertical
+	// bottom left vertical
 	s.add2dPattern(finderPatternSize, s.size-finderPatternSize-1, separatorVerticalPattern)
-	// bottom right horizontal
+	// bottom left horizontal
 	s.add2dPattern(0, s.size-finderPatternSize-1, separatorHorizontalPattern)
 }
 
@@ -168,7 +167,7 @@ func (s *Symbol) addTimingPatterns() {
 	v := true
 
 	// start of timing pattern: finder pattern size + separator size (1)
-	for i := finderPatternSize + 1; i < s.size-finderPatternSize; i++ {
+	for i := finderPatternSize + 1; i < s.size-finderPatternSize-1; i++ {
 		// horizontal direction
 		s.add(i, finderPatternSize-1, v)
 		// vertical direction
@@ -226,6 +225,11 @@ func (s *Symbol) addData() {
 				}
 			}
 
+			// column 6 cannot be write and need to skip
+			if x == 6 {
+				x--
+			}
+
 			if !s.isDirty(x+dx, y) {
 				// break if next position is not dirty
 				break
@@ -237,13 +241,6 @@ func (s *Symbol) addData() {
 
 func (s *Symbol) addFormatInfo() {
 	fi := FormatInfo(s.ecl, s.mask)
-	for i, v := range fi.Values() {
-		if i == 0 {
-			fmt.Printf("👺 format info: %08b\n", v)
-		} else {
-			fmt.Printf("👺 format info: %07b\n", v)
-		}
-	}
 	s.addVerticalFormatInfo(fi)
 	s.addHorizontalFormatInfo(fi)
 }
@@ -259,7 +256,7 @@ func (s *Symbol) addVerticalFormatInfo(fi *bitset.BitSet) {
 
 	// Bits 6-7
 	for i := 6; i <= 7; i++ {
-		s.add(finderPatternSize+1, i, fi.GetValue(last-i))
+		s.add(finderPatternSize+1, i+1, fi.GetValue(last-i))
 	}
 
 	// (finderPatternSize+1, s.size-finderPatternSize-1) is black

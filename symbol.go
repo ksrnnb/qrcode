@@ -131,7 +131,22 @@ func (s *Symbol) addHorizontalFormatInfo(fi *bitset.BitSet) {
 }
 
 func (s *Symbol) penalty() int {
-	// TODO: calculate
+	return s.penalty1() + s.penalty2() + s.penalty3() + s.penalty4()
+}
+
+func (s *Symbol) penalty1() int {
+	return 0
+}
+
+func (s *Symbol) penalty2() int {
+	return 0
+}
+
+func (s *Symbol) penalty3() int {
+	return 0
+}
+
+func (s *Symbol) penalty4() int {
 	return 0
 }
 

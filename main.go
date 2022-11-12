@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"os"
 
 	"github.com/ksrnnb/qrcode/reedsolomon"
 )
@@ -24,7 +25,14 @@ func main() {
 		if newS.penalty() < penalty {
 			penalty = newS.penalty()
 			s = newS
+			fmt.Printf("last mask is %b\n", mask)
 		}
 	}
-	fmt.Printf("%+v\n", s)
+	png, err := s.PNG(255)
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+		return
+	}
+
+	os.WriteFile("qrcode.png", png, 0666)
 }

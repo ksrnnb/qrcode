@@ -1,6 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"math"
 
 	"github.com/ksrnnb/qrcode/bitset"
@@ -68,6 +73,56 @@ func NewSymbol(ecl ErrorCorrectionLevel, mask uint8, data *bitset.BitSet) *Symbo
 	}
 
 	return s
+}
+
+func (s *Symbol) Image(size int) image.Image {
+	realSize := s.size + 2*quietZoneSize
+
+	if size < realSize {
+		size = realSize
+	}
+
+	// Output image.
+	rect := image.Rectangle{Min: image.Point{0, 0}, Max: image.Point{size, size}}
+
+	// Saves a few bytes to have them in this order
+	p := color.Palette([]color.Color{color.White, color.Black})
+	img := image.NewPaletted(rect, p)
+	fgClr := uint8(img.Palette.Index(color.Black))
+
+	// QR code bitmap.
+	bitmap := s.modules
+
+	// Map each image pixel to the nearest QR code module.
+	modulesPerPixel := float64(realSize) / float64(size)
+	for y := 0; y < size; y++ {
+		y2 := int(float64(y) * modulesPerPixel)
+		for x := 0; x < size; x++ {
+			x2 := int(float64(x) * modulesPerPixel)
+
+			v := bitmap[y2][x2]
+
+			if v {
+				pos := img.PixOffset(x, y)
+				img.Pix[pos] = fgClr
+			}
+		}
+	}
+
+	return img
+}
+
+func (s *Symbol) PNG(size int) ([]byte, error) {
+	img := s.Image(size)
+
+	var b bytes.Buffer
+	err := png.Encode(&b, img)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return b.Bytes(), nil
 }
 
 func (s *Symbol) build() {
@@ -182,6 +237,13 @@ func (s *Symbol) addData() {
 
 func (s *Symbol) addFormatInfo() {
 	fi := FormatInfo(s.ecl, s.mask)
+	for i, v := range fi.Values() {
+		if i == 0 {
+			fmt.Printf("👺 format info: %08b\n", v)
+		} else {
+			fmt.Printf("👺 format info: %07b\n", v)
+		}
+	}
 	s.addVerticalFormatInfo(fi)
 	s.addHorizontalFormatInfo(fi)
 }

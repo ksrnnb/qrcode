@@ -85,29 +85,40 @@ func TestBools(t *testing.T) {
 }
 
 func TestByteAt(t *testing.T) {
-	bools := []bool{
-		true, true, false, false, true, true, true, false,
-		false, true, false, false, true, false, false, true,
-	}
-
 	tests := []struct {
 		pos  int
+		data []bool
 		want byte
 	}{
 		{
-			pos:  0,
+			pos: 0,
+			data: []bool{
+				true, true, false, false, true, true, true, false,
+				false, true, false, false, true, false, false, true,
+			},
 			want: 206,
 		},
 		{
-			pos:  1,
+			pos: 1,
+			data: []bool{
+				true, true, false, false, true, true, true, false,
+				false, true, false, false, true, false, false, true,
+			},
 			want: 73,
+		},
+		{
+			pos: 0,
+			data: []bool{
+				false, true, false, false, true, false,
+			},
+			want: 18,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run("test for ByteAt", func(t *testing.T) {
-			bs := NewBitSet(len(bools))
-			bs.SetBools(bools...)
+			bs := NewBitSet(len(test.data))
+			bs.SetBools(test.data...)
 			if bs.ByteAt(test.pos) != test.want {
 				t.Errorf("want %d, but got %d", test.want, bs.ByteAt(test.pos))
 			}

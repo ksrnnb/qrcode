@@ -1,42 +1,88 @@
 package qrcode
 
 import (
-	"errors"
+	"fmt"
 	"unicode/utf8"
 
 	"github.com/ksrnnb/qrcode/bitset"
 	"github.com/ksrnnb/qrcode/reedsolomon"
 )
 
+type qrInfo struct {
+	version            int
+	ecl                ErrorCorrectionLevel
+	mode               ModeIndicator
+	dataCap            int // code cap = countDataCodeWords + countErrorCodeWords
+	countDataCodeWords int
+	srcCap             int
+}
+
+func newQrInfo(ecl ErrorCorrectionLevel, src string) qrInfo {
+	// supports only version 1
+	switch ecl {
+	case ECL_Low:
+		return qrInfo{
+			version:            1,
+			ecl:                ecl,
+			mode:               EightBits,
+			dataCap:            26,
+			countDataCodeWords: 19,
+			srcCap:             17,
+		}
+	case ECL_Medium:
+		return qrInfo{
+			version:            1,
+			ecl:                ecl,
+			mode:               EightBits,
+			dataCap:            26,
+			countDataCodeWords: 16,
+			srcCap:             14,
+		}
+	case ECL_High:
+		return qrInfo{
+			version:            1,
+			ecl:                ecl,
+			mode:               EightBits,
+			dataCap:            26,
+			countDataCodeWords: 13,
+			srcCap:             11,
+		}
+	default: // Error Correction Level: H
+		return qrInfo{
+			version:            1,
+			ecl:                ecl,
+			mode:               EightBits,
+			dataCap:            26,
+			countDataCodeWords: 9,
+			srcCap:             7,
+		}
+	}
+}
+
+func (qi qrInfo) countErrorCordWords() int {
+	return qi.dataCap - qi.countDataCodeWords
+}
+
 func encodeRawData(ecl ErrorCorrectionLevel, src string) (*bitset.BitSet, error) {
-	if ecl != ECL_Medium {
-		return nil, errors.New("this pacakge supports only 1-M type, error correction level must be 'M'")
+	info := newQrInfo(ecl, src)
+	if utf8.RuneCountInString(src) > info.srcCap {
+		return nil, fmt.Errorf("this app supports only version 1 and 8 bits byte mode, must be less than %d characters", info.srcCap+1)
 	}
 
-	if utf8.RuneCountInString(src) >= 16 {
-		return nil, errors.New("this app supports only 1-M type and 8 bits byte mode, must be less than 16 characters")
-	}
-
-	mode := EightBits
-	version := 1
-
-	// 1-M: data code size is 16
-	// 8 bytes mode => 16 * 8
-	codeLength := 16 * 8
+	// 8 bytes mode => countDataCodeWords * 8
+	codeLength := info.countDataCodeWords * 8
 	bs := bitset.NewBitSet(codeLength)
 
-	bitCount := characterCountIndicatorBits(version, mode)
+	bitCount := characterCountIndicatorBits(info.version, info.mode)
 	charCount := utf8.RuneCountInString(src)
 
-	addModeIndicator(bs, mode)
+	addModeIndicator(bs, info.mode)
 	addCharacterCountIndicator(bs, bitCount, charCount)
 	addSrcData(bs, src)
 	addTerminator(bs)
 	addPaddingBit(bs)
 
-	// 1-M: count of error collection words is 10
-	ecwords := 10
-	rsEncoded := reedsolomon.Encode(bs, ecwords)
+	rsEncoded := reedsolomon.Encode(bs, info.countErrorCordWords())
 
 	return rsEncoded, nil
 }

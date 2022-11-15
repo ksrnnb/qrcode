@@ -48,7 +48,7 @@ func main() {
 
 - https://github.com/skip2/go-qrcode
 
-# Japanese Referenct
+# Japanese Reference
 - JIS X 0510 2004
   - https://kikakurui.com/x0/X0510-2004-01.html (without image)
   - https://www.jisc.go.jp/app/jis/general/GnrJISNumberNameSearchList?toGnrJISStandardDetailList (only view)

@@ -1,5 +1,7 @@
 package bitset
 
+import "fmt"
+
 func GetBit[T int | uint8 | uint16](v T, pos int) bool {
 	return ((v >> pos) & 1) == 1
 }
@@ -29,6 +31,12 @@ func (bs *BitSet) Values() []byte {
 		values[i] = bs.ByteAt(i)
 	}
 	return values
+}
+
+func (bs *BitSet) Debug() {
+	for _, v := range bs.Values() {
+		fmt.Printf("%08b ", v)
+	}
 }
 
 func (bs *BitSet) SetInt(v int, length int) {

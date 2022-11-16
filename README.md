@@ -49,8 +49,7 @@ func main() {
 - https://github.com/skip2/go-qrcode
 
 # Japanese Reference
-- JIS X 0510 2004
-  - https://kikakurui.com/x0/X0510-2004-01.html (without image)
+- JIS X 0510 2018
   - https://www.jisc.go.jp/app/jis/general/GnrJISNumberNameSearchList?toGnrJISStandardDetailList (only view)
 - [ＱＲコードをつくってみる](https://www.swetake.com/qrcode/qr1.html)
 - [例題で学ぶ符号理論入門](https://www.morikita.co.jp/books/mid/081741)

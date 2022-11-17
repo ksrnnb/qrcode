@@ -378,12 +378,7 @@ func (q *QRCode) penalty() int {
 }
 
 func (q *QRCode) penalty1() int {
-	p := q.penalty1Horizontal()
-	if p < q.penalty1Vertical() {
-		p = q.penalty1Vertical()
-	}
-
-	return p
+	return q.penalty1Horizontal() + q.penalty1Vertical()
 }
 
 func (q *QRCode) penalty1Horizontal() int {
@@ -393,7 +388,6 @@ func (q *QRCode) penalty1Horizontal() int {
 	for y := 0; y < q.size; y++ {
 		lastValue := q.get(0, y)
 		count := 1
-
 		for x := 1; x < q.size; x++ {
 			v := q.get(x, y)
 
@@ -403,13 +397,9 @@ func (q *QRCode) penalty1Horizontal() int {
 			} else {
 				count++
 				if count == 5 {
-					if penalty < penaltyWeight {
-						penalty = penaltyWeight
-					}
-				} else if count > 6 {
-					if penalty < penaltyWeight+count-5 {
-						penalty = penaltyWeight + count - 5
-					}
+					penalty += penaltyWeight
+				} else if count >= 6 {
+					penalty++
 				}
 			}
 		}
@@ -424,7 +414,6 @@ func (q *QRCode) penalty1Vertical() int {
 	for x := 0; x < q.size; x++ {
 		lastValue := q.get(x, 0)
 		count := 1
-
 		for y := 1; y < q.size; y++ {
 			v := q.get(x, y)
 
@@ -434,13 +423,9 @@ func (q *QRCode) penalty1Vertical() int {
 			} else {
 				count++
 				if count == 5 {
-					if penalty < penaltyWeight {
-						penalty = penaltyWeight
-					}
-				} else if count > 6 {
-					if penalty < penaltyWeight+count-5 {
-						penalty = penaltyWeight + count - 5
-					}
+					penalty += penaltyWeight
+				} else if count >= 6 {
+					penalty++
 				}
 			}
 		}
@@ -449,7 +434,7 @@ func (q *QRCode) penalty1Vertical() int {
 }
 
 func (q *QRCode) penalty2() int {
-	penalty := 0
+	count := 0
 	penaltyWeight2 := 3
 
 	for y := 1; y < q.size; y++ {
@@ -460,11 +445,11 @@ func (q *QRCode) penalty2() int {
 			current := q.get(x, y)
 
 			if current == left && current == above && current == topLeft {
-				penalty++
+				count++
 			}
 		}
 	}
-	return penalty * penaltyWeight2
+	return count * penaltyWeight2
 }
 
 func (q *QRCode) penalty3() int {
